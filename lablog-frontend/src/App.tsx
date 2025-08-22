@@ -1,35 +1,90 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { ocrSpace } from "./utils/ocrService";
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [ocrResult, setOcrResult] = useState<string>("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string>("");
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setError("");
+            setOcrResult("");
+        }
+    };
+
+    const processOCR = async () => {
+        if (!selectedFile) {
+            setError("Please select a file first");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+
+        try {
+            // Use our custom OCR service with the file directly
+            const result = await ocrSpace(selectedFile, {
+                apiKey: "K89498462088957",
+                language: "eng",
+            });
+
+            if (result.ParsedResults && result.ParsedResults.length > 0) {
+                setOcrResult(result.ParsedResults[0].ParsedText);
+            } else {
+                setError("No text found in the image");
+            }
+        } catch (err) {
+            setError("Error processing OCR: " + (err as Error).message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <h1>OCR Demo with OCR.space API</h1>
+            <div className="card">
+                <div style={{ marginBottom: "20px" }}>
+                    <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={handleFileSelect}
+                        style={{ marginBottom: "10px" }}
+                    />
+                </div>
+
+                <button
+                    onClick={processOCR}
+                    disabled={!selectedFile || loading}
+                    style={{ marginBottom: "20px" }}
+                >
+                    {loading ? "Processing..." : "Extract Text"}
+                </button>
+
+                {error && (
+                    <div style={{ color: "red", marginBottom: "20px" }}>
+                        {error}
+                    </div>
+                )}
+
+                {ocrResult && (
+                    <div style={{ marginTop: "20px" }}>
+                        <h3>Extracted Text:</h3>
+                        <textarea
+                            value={ocrResult}
+                            readOnly
+                            rows={10}
+                            style={{ width: "100%", padding: "10px" }}
+                        />
+                    </div>
+                )}
+            </div>
+        </>
+    );
 }
 
-export default App
+export default App;

@@ -10,9 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@supabase/supabase-js": "github:supabase/supabase-js",
     "node": "^24.6.0",
+    "ocr-space-api-wrapper": "^2.4.1",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "supabase": "^2.34.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.33.0",
