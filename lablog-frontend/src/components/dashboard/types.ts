@@ -4,6 +4,7 @@ export interface DashboardRow extends LabValueRow {
   created_at?: string;
   numeric?: number | null;
   test_date?: string;
+  ai_inferred_range?: boolean; // propagated from ingestion
 }
 
 export interface ScheduleItem {
@@ -12,6 +13,7 @@ export interface ScheduleItem {
   reason: "out_of_range" | "trend" | "manual";
   status: "pending" | "done";
   id?: number;
+  doctor?: string;
 }
 
 export interface TrendInfo {

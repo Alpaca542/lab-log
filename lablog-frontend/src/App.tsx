@@ -78,59 +78,116 @@ function App() {
     const callAskAIForLabJSON = async (
         raw: string
     ): Promise<{ rows: LabValueRow[]; test_date?: string }> => {
-        // Build line-limited message; instruct consistent JSON.
         const lines = raw.split(/\r?\n/).filter((l) => l.trim());
+        // Updated prompt: includes AI inferred reference range logic (*)
         const prompt =
-            `Extract structured lab test results and the overall test date from the input. Output ONLY JSON in this shape: {"test_date": "YYYY-MM-DD" or "", "results": [...]}
-
-- test_date: Extract the most relevant specimen collection date in any format. If missing, use an empty string.
-- results: List of items, each as {"test_name": string, "value": number, "unit": string, "reference_range": string, "category": string}
-    - If value is missing or "not detected," return 0.
-    - reference_range: Always use the format a<x<b, strict bounds. Convert all forms to this. If only a lower or upper limit, set missing bounds to 0 or 999999. If missing, use "NO_RANGE".
-    - Normalize all units.
-    - Only use category values: blood, metabolic, vision, hormonal, kidney, liver, lipid, vitamin, immune, other.
-    - Simplify all test names to their core standardized names; expand abbreviations and remove location/specimen.
-- If the tests are given together, it's highly probable they share the same category. 
-
-Edge cases:
-- If only one date is present but unlabeled, use it.
-- Never invent missing fields or values.
-- Always follow strict reference_range formatting.
-
-Respond with a single JSON object matching ALL above rules. No explanation.
-
-# Output Format
-
-Return a single JSON object with fields exactly as described. No extra text.
-
-# Example
-
-Input:  
-"Lab Panel – Collected May 12, 2023  
-Alanine Aminotransferase (ALT) 32 IU/L (Norm: 7-56 IU/L)  
-Serum Creatinine 1.02 mg/dL (Ref Range: 0.6–1.3)  
-TSH 2.8 mIU/L (0.5-4.5)  
-Vitamin B12 432 pg/mL  
-White Blood Cells 8.1 x10^3/uL (Norm: 4.5–11.0)"
-
-Output:  
-{
-  "test_date": "2023-05-12",
-  "results": [
-    {"test_name": "Alanine Aminotransferase", "value": 32, "unit": "IU/L", "reference_range": "7<x<56", "category": "liver"},
-    {"test_name": "Creatinine", "value": 1.02, "unit": "mg/dL", "reference_range": "0.6<x<1.3", "category": "kidney"},
-    {"test_name": "Thyroid Stimulating Hormone", "value": 2.8, "unit": "mIU/L", "reference_range": "0.5<x<4.5", "category": "hormonal"},
-    {"test_name": "Vitamin B12", "value": 432, "unit": "pg/mL", "reference_range": "NO_RANGE", "category": "vitamin"},
-    {"test_name": "White Blood Cells", "value": 8.1, "unit": "x10^3/uL", "reference_range": "4.5<x<11.0", "category": "blood"}
-  ]
-}
-
-(Reminder: Only output the JSON object, strictly following field requirements and normalization rules.)
+            `**Task**
+Extract structured lab test results and the overall test date from the input text. Respond **only with JSON**, strictly following the schema and rules below.
 
 ---
 
-Your task: Parse input and output JSON matching all rules above. Do not add commentary. Respond only with the JSON.` +
-            lines.slice(0, 300).join("\n");
+### **Output Format**
+
+{
+"test\_date": "YYYY-MM-DD" | "",
+"results": \[
+{
+"test\_name": "string",
+"value": number | "string",
+"unit": "string",
+"reference\_range": "a\<x\<b" | "NO\_RANGE" | "a\<x\<b\*",
+"category": "blood" | "metabolic" | "vision" | "hormonal" | "kidney" | "liver" | "lipid" | "vitamin" | "immune" | "other",
+"doctor": "Endocrinologist" | "Nephrologist" | "Hepatologist" | "Cardiologist" | "Hematologist" | "Ophthalmologist" | "Rheumatologist" | "Infectious Disease" | "Primary Care"
+}
+]
+}
+
+---
+
+### **Extraction Rules**
+
+#### **Date (test\_date)**
+
+* Extract the most relevant specimen collection date in any format.
+* Convert to YYYY-MM-DD if possible.
+* If no date is found, output an empty string ("").
+
+---
+
+#### **Results (results)**
+
+Each test must be an object with these fields:
+
+* **test\_name**
+
+  * Standardized core name.
+  * Expand abbreviations and remove location/specimen references.
+
+* **value**
+
+  * Numeric if quantitative.
+  * Keep original text if qualitative (e.g., "detected", "positive").
+  * Treat "not detected" or "negative" values as 0.
+
+* **unit**
+
+  * Use normalized canonical units.
+  * If qualitative without a unit, set unit to "text".
+
+* **reference\_range**
+
+  * Always use strict format: a\<x\<b (numeric values only, no units). "negative" or "not detected" should be treated as a missing range.
+  * **If only lower bound exists:** a\<x<999999.
+  * **If only upper bound exists:** 0\<x\<b.
+  * **If the range is missing or something like "negative" or "not-detected":**
+    * Infer a conventional adult range, appending a \* (e.g., 70\<x<99\*).
+    * Otherwise use "NO\_RANGE".
+
+* **category**
+
+  * One of: blood, metabolic, vision, hormonal, kidney, liver, lipid, vitamin, immune, other.
+  * If uncertain, default to other.
+
+* **doctor**
+
+  * Choose the most relevant specialist from the predefined list.
+  * Use "Primary Care" if unclear.
+
+---
+
+### **Edge Cases**
+
+* If only one date is present, use it, even if unlabeled.
+* Do not fabricate missing fields or values.
+* Do not output extra fields.
+* If tests appear grouped, assume they share the same category.
+
+---
+
+### **Example**
+
+**Input:**
+
+Lab Panel – Collected May 12, 2023
+Alanine Aminotransferase (ALT) 32 IU/L (Norm: 7-56 IU/L)
+Serum Creatinine 1.02 mg/dL (Ref Range: 0.6–1.3)
+TSH 2.8 mIU/L (0.5-4.5)
+Vitamin B12 432 pg/mL
+White Blood Cells 8.1 x10^3/uL (Norm: 4.5–11.0)
+
+**Output:**
+
+{
+"test\_date": "2023-05-12",
+"results": \[
+{"test\_name": "Alanine Aminotransferase", "value": 32, "unit": "IU/L", "reference\_range": "7\<x<56", "category": "liver", "doctor": "Hepatologist"},
+{"test\_name": "Creatinine", "value": 1.02, "unit": "mg/dL", "reference\_range": "0.6\<x<1.3", "category": "kidney", "doctor": "Nephrologist"},
+{"test\_name": "Thyroid Stimulating Hormone", "value": 2.8, "unit": "mIU/L", "reference\_range": "0.5\<x<4.5", "category": "hormonal", "doctor": "Endocrinologist"},
+{"test\_name": "Vitamin B12", "value": 432, "unit": "pg/mL", "reference\_range": "NO\_RANGE", "category": "vitamin", "doctor": "Primary Care"},
+{"test\_name": "White Blood Cells", "value": 8.1, "unit": "x10^3/uL", "reference\_range": "4.5\<x<11.0", "category": "blood", "doctor": "Hematologist"}
+]
+}
+` + lines.slice(0, 300).join("\n");
         const { data, error } = await supabase.functions.invoke("ask-ai", {
             body: { message: prompt, model: "gpt-5-mini" },
         });
@@ -153,14 +210,50 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                     rr = "NO_RANGE"; // treat 0<x<0 as missing sentinel
                 }
                 if (!rr) rr = "NO_RANGE"; // enforce sentinel for missing
+                const aiInferred = rr.endsWith("*");
                 return {
                     test_name: String(r.test_name || r.name || ""),
                     value: String(r.value ?? r.val ?? 0),
                     unit: String(r.unit || ""),
                     reference_range: rr,
                     category: String(r.category || r.group || ""),
+                    doctor: String(r.doctor || r.specialist || ""),
+                    ai_inferred_range: aiInferred,
                 };
             });
+            // Historical reference range override: prefer prior authentic (non-* and not NO_RANGE)
+            if (dashboardData && dashboardData.length) {
+                const authenticByName: Record<string, string> = {};
+                dashboardData.forEach((d: any) => {
+                    const n = (d.test_name || "")
+                        .toString()
+                        .trim()
+                        .toLowerCase();
+                    const rr = (d.reference_range || "").toString();
+                    if (!n) return;
+                    if (
+                        rr &&
+                        rr !== "NO_RANGE" &&
+                        !rr.endsWith("*") &&
+                        !authenticByName[n]
+                    ) {
+                        authenticByName[n] = rr;
+                    }
+                });
+                rows.forEach((r) => {
+                    const key = r.test_name.trim().toLowerCase();
+                    const hist = authenticByName[key];
+                    if (hist) {
+                        if (
+                            r.reference_range === "NO_RANGE" ||
+                            r.reference_range.endsWith("*")
+                        ) {
+                            r.reference_range = hist; // override with authentic
+                            (r as any).ai_inferred_range = false;
+                        }
+                    }
+                });
+            }
             // Override categories using existing historical categories when test name already known
             if (dashboardData && dashboardData.length) {
                 const existingCategoryByName: Record<string, string> = {};

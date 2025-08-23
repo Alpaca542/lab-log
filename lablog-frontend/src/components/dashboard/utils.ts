@@ -3,7 +3,9 @@ import type { DashboardRow, TrendInfo } from "./types";
 
 export function parseRange(range?: string) {
   if (!range || range === "NO_RANGE") return null;
-  const m = range.match(/\s*([+-]?\d*\.?\d+)\s*<\s*x\s*<\s*([+-]?\d*\.?\d+)/i);
+  // Strip trailing * (AI-inferred range marker) if present
+  const cleaned = range.endsWith('*') ? range.slice(0, -1) : range;
+  const m = cleaned.match(/\s*([+-]?\d*\.?\d+)\s*<\s*x\s*<\s*([+-]?\d*\.?\d+)/i);
   if (!m) return { low: -1, high: -1, alwaysGreen: true };
   const low = parseFloat(m[1]);
   const high = parseFloat(m[2]);

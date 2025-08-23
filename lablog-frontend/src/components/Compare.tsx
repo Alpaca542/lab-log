@@ -5,6 +5,7 @@ export interface LabValueRow {
     reference_range?: string;
     category?: string;
     dateAdded?: string;
+    ai_inferred_range?: boolean; // true if current reference_range ends with * originally
 }
 
 interface CompareProps {
@@ -168,9 +169,35 @@ export default function Compare({
                                                         "reference_range",
                                                         val ? val : "NO_RANGE"
                                                     );
+                                                    // If user edits manually, clear ai flag
+                                                    if (
+                                                        rows[i]
+                                                            .ai_inferred_range
+                                                    ) {
+                                                        const next = [...rows];
+                                                        next[i] = {
+                                                            ...next[i],
+                                                            ai_inferred_range:
+                                                                false,
+                                                        };
+                                                        onChange(next);
+                                                    }
                                                 }}
                                                 className="w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200"
                                             />
+                                            {r.reference_range &&
+                                                r.reference_range !==
+                                                    "NO_RANGE" &&
+                                                r.reference_range.endsWith(
+                                                    "*"
+                                                ) && (
+                                                    <span
+                                                        className="ml-1 text-[10px] text-blue-600 cursor-help"
+                                                        title="AI-inferred reference range (verify with your lab)"
+                                                    >
+                                                        *
+                                                    </span>
+                                                )}
                                         </td>
                                         <td className="py-1 px-2 border-b border-gray-200 align-top">
                                             <input
