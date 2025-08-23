@@ -1,13 +1,51 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <head>
+        <meta charset="UTF-8" />
+        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            name="description"
+            content="LabLog - A personal lab dashboard for tracking experiments, research progress, and scientific data management."
+        />
+        <meta
+            name="keywords"
+            content="lab, laboratory, dashboard, experiments, research, science, data management, tracking"
+        />
+        <title>LabLog – Personal Lab Dashboard</title>
+        <style>
+            @keyframes floatFade {
+                0% {
+                    transform: translateY(6px);
+                    opacity: 0;
+                }
+                40% {
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-6px);
+                    opacity: 1;
+                }
+            }
+            @keyframes pulseBorder {
+                0%,
+                100% {
+                    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
+                }
+                70% {
+                    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+                }
+            }
+            .animate-floatFade {
+                animation: floatFade 0.9s ease forwards;
+            }
+            .animate-pulseBorder {
+                animation: pulseBorder 3.2s ease-in-out infinite;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="root"></div>
+        <script type="module" src="/src/main.tsx"></script>
+    </body>
 </html>

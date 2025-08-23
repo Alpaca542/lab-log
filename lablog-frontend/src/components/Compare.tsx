@@ -54,32 +54,27 @@ export default function Compare({
     };
 
     return (
-        <div className="flex gap-6 items-start">
+        <div className="flex gap-8 items-start">
             <div className="flex-1 min-w-0">
-                <h3 className="font-semibold mb-2">Original File</h3>
-                {originalFileUrl.toLowerCase().endsWith(".pdf") ? (
-                    <embed
-                        src={originalFileUrl}
-                        type="application/pdf"
-                        width="100%"
-                        height={500}
-                        className="border rounded"
-                    />
-                ) : (
-                    <img
-                        src={originalFileUrl}
-                        className="max-w-full max-h-[500px] rounded border object-contain"
-                    />
-                )}
+                <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-slate-600">
+                    Original File
+                </h3>
+                <embed
+                    src={originalFileUrl}
+                    type="application/pdf"
+                    width="100%"
+                    height={500}
+                    className="border rounded"
+                />
             </div>
             <div className="flex-1">
-                <h3 className="font-semibold mb-2">
+                <h3 className="font-semibold mb-2 text-sm uppercase tracking-wide text-slate-600">
                     Extracted Values (Editable)
                 </h3>
-                <div className="max-h-[500px] overflow-auto border border-gray-300 rounded p-2 bg-white">
-                    <table className="w-full border-collapse text-sm">
+                <div className="max-h-[520px] overflow-auto border border-slate-200 rounded-lg p-2 bg-white shadow-sm ring-1 ring-slate-100">
+                    <table className="w-full border-collapse text-xs">
                         <thead>
-                            <tr className="bg-gray-100 text-xs text-gray-700">
+                            <tr className="bg-slate-50 text-[11px] text-slate-600">
                                 <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
                                     Test
                                 </th>
@@ -108,7 +103,7 @@ export default function Compare({
                                 return (
                                     <tr
                                         key={i}
-                                        className="odd:bg-white even:bg-gray-50"
+                                        className="odd:bg-white even:bg-slate-50 hover:bg-blue-50/40 transition"
                                     >
                                         <td className="py-1 px-2 border-b border-gray-200 align-top">
                                             <input
@@ -120,7 +115,7 @@ export default function Compare({
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                                className="w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200"
                                             />
                                         </td>
                                         <td className="py-1 px-2 border-b border-gray-200 align-top">
@@ -133,7 +128,7 @@ export default function Compare({
                                                         e.target.value
                                                     )
                                                 }
-                                                className={`w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring ${
+                                                className={`w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200 ${
                                                     rangeActive
                                                         ? inside
                                                             ? "bg-emerald-50 border-emerald-500"
@@ -152,7 +147,7 @@ export default function Compare({
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                                className="w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200"
                                             />
                                         </td>
                                         <td className="py-1 px-2 border-b border-gray-200 align-top">
@@ -174,7 +169,7 @@ export default function Compare({
                                                         val ? val : "NO_RANGE"
                                                     );
                                                 }}
-                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                                className="w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200"
                                             />
                                         </td>
                                         <td className="py-1 px-2 border-b border-gray-200 align-top">
@@ -187,7 +182,7 @@ export default function Compare({
                                                         e.target.value
                                                     )
                                                 }
-                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                                className="w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200"
                                                 placeholder="blood / vision / ..."
                                             />
                                         </td>
@@ -198,7 +193,7 @@ export default function Compare({
                                 <tr>
                                     <td
                                         colSpan={5}
-                                        className="text-center py-4 text-xs text-gray-500"
+                                        className="text-center py-4 text-xs text-slate-500"
                                     >
                                         No rows
                                     </td>
@@ -207,20 +202,22 @@ export default function Compare({
                         </tbody>
                     </table>
                 </div>
-                <button
-                    onClick={onConfirm}
-                    disabled={disabled}
-                    className="mt-3 px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-blue-700"
-                >
-                    Save To Database
-                </button>
-                <div className="mt-2 text-[11px] text-gray-600 flex items-center gap-2">
-                    <span className="bg-emerald-50 border border-emerald-500 px-2 py-[2px] rounded text-emerald-700">
-                        In range
-                    </span>
-                    <span className="bg-rose-50 border border-rose-500 px-2 py-[2px] rounded text-rose-700">
-                        Out of range
-                    </span>
+                <div className="flex items-center gap-4 mt-4">
+                    <button
+                        onClick={onConfirm}
+                        disabled={disabled}
+                        className="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-blue-700 shadow-sm"
+                    >
+                        Save to Dashboard
+                    </button>
+                    <div className="mt-1 text-[11px] text-slate-600 flex items-center gap-2">
+                        <span className="bg-emerald-50 border border-emerald-500 px-2 py-[2px] rounded text-emerald-700">
+                            In range
+                        </span>
+                        <span className="bg-rose-50 border border-rose-500 px-2 py-[2px] rounded text-rose-700">
+                            Out of range
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
