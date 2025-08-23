@@ -83,7 +83,6 @@ Edge cases:
 - If only one date is present but unlabeled, use it.
 - Never invent missing fields or values.
 - Always follow strict reference_range formatting.
-- If you cannot identify a unit(for example for qualitative measures), the test should be ignored entirely.
 
 Respond with a single JSON object matching ALL above rules. No explanation.
 
@@ -149,6 +148,25 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                     category: String(r.category || r.group || ""),
                 };
             });
+            // Override categories using existing historical categories when test name already known
+            if (dashboardData && dashboardData.length) {
+                const existingCategoryByName: Record<string, string> = {};
+                dashboardData.forEach((d: any) => {
+                    const n = (d.test_name || "")
+                        .toString()
+                        .trim()
+                        .toLowerCase();
+                    if (n && d.category && !existingCategoryByName[n]) {
+                        existingCategoryByName[n] = d.category;
+                    }
+                });
+                for (let i = 0; i < rows.length; i++) {
+                    const key = rows[i].test_name.trim().toLowerCase();
+                    if (existingCategoryByName[key]) {
+                        rows[i].category = existingCategoryByName[key];
+                    }
+                }
+            }
             return { rows, test_date: parsed.test_date || parsed.date };
         } catch (err) {
             console.error("Failed parsing AI output", text);
@@ -237,23 +255,13 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
     }, [session]);
 
     return (
-        <div style={{ padding: 24, fontFamily: "sans-serif" }}>
-            <style>{`@keyframes spin {from {transform: rotate(0deg);} to {transform: rotate(360deg);}}`}</style>
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 12,
-                }}
-            >
-                <strong>LabLog</strong>
+        <div className="p-6 font-sans">
+            <div className="flex items-center justify-between mb-3">
+                <strong className="text-lg">LabLog</strong>
                 {session && (
-                    <div
-                        className="flex gap-sm"
-                        style={{ alignItems: "center" }}
-                    >
+                    <div className="flex items-center gap-2">
                         <button
+                            className="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
                             onClick={() => {
                                 loadDashboard();
                                 setView("dashboard");
@@ -262,6 +270,7 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                             Dashboard
                         </button>
                         <button
+                            className="px-3 py-1 border rounded hover:bg-gray-100 text-sm"
                             onClick={() => {
                                 logout();
                                 setSession(null);
@@ -281,38 +290,30 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                 />
             )}
             {view === "setup" && (
-                <div style={{ maxWidth: 900, margin: "0 auto" }}>
-                    <h2>Upload Lab Report</h2>
+                <div className="max-w-[900px] mx-auto">
+                    <h2 className="text-2xl font-semibold mb-4">
+                        Upload Lab Report
+                    </h2>
                     <FileUpload onFileSelected={handleFileSelected} />
-                    <div style={{ marginTop: 16, display: "flex", gap: 12 }}>
+                    <div className="mt-4 flex gap-3 items-center text-sm">
                         <button
+                            className="px-4 py-2 rounded border disabled:opacity-50 hover:bg-gray-100"
                             onClick={runOcrAndAI}
                             disabled={!fileInfo || loading}
                         >
                             {loading ? "Processing..." : "Run OCR + AI"}
                         </button>
-                        {statusMsg && (
-                            <span style={{ fontSize: 12 }}>{statusMsg}</span>
-                        )}
+                        {statusMsg && <span>{statusMsg}</span>}
                     </div>
                     {error && (
-                        <div style={{ color: "red", marginTop: 12 }}>
-                            {error}
-                        </div>
+                        <div className="text-red-600 mt-3 text-sm">{error}</div>
                     )}
                     {rawOcrText && (
-                        <details style={{ marginTop: 16 }}>
-                            <summary style={{ cursor: "pointer" }}>
+                        <details className="mt-4 text-sm">
+                            <summary className="cursor-pointer font-medium">
                                 Raw OCR Text
                             </summary>
-                            <pre
-                                style={{
-                                    whiteSpace: "pre-wrap",
-                                    fontSize: 12,
-                                    background: "#f8f8f8",
-                                    padding: 8,
-                                }}
-                            >
+                            <pre className="whitespace-pre-wrap text-xs bg-gray-100 p-2 rounded mt-2 max-h-72 overflow-auto">
                                 {rawOcrText}
                             </pre>
                         </details>
@@ -320,32 +321,26 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                 </div>
             )}
             {view === "review" && fileInfo && (
-                <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                    <h2>Review Extracted Values</h2>
+                <div className="max-w-[1200px] mx-auto">
+                    <h2 className="text-2xl font-semibold mb-4">
+                        Review Extracted Values
+                    </h2>
                     {error && (
-                        <div style={{ color: "red", marginBottom: 12 }}>
-                            {error}
-                        </div>
+                        <div className="text-red-600 mb-3 text-sm">{error}</div>
                     )}
-                    <div
-                        style={{
-                            display: "flex",
-                            gap: 16,
-                            alignItems: "center",
-                            marginBottom: 12,
-                        }}
-                    >
-                        <label style={{ fontSize: 12 }}>
-                            Test Date:{" "}
+                    <div className="flex gap-4 items-center mb-3 text-xs">
+                        <label className="flex items-center gap-1">
+                            <span className="font-medium">Test Date:</span>
                             <input
                                 type="date"
                                 value={testDate}
                                 max={new Date().toISOString().slice(0, 10)}
                                 onChange={(e) => setTestDate(e.target.value)}
+                                className="border rounded px-2 py-1"
                             />
                         </label>
                         {!testDate && (
-                            <span style={{ fontSize: 12, color: "#dc2626" }}>
+                            <span className="text-red-600">
                                 No date detected - please set or use today
                             </span>
                         )}
@@ -357,6 +352,7 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                                         new Date().toISOString().slice(0, 10)
                                     )
                                 }
+                                className="px-3 py-1 border rounded text-xs hover:bg-gray-100"
                             >
                                 Use Today
                             </button>
@@ -370,7 +366,7 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                         disabled={loading || rows.length === 0 || !testDate}
                     />
                     <button
-                        style={{ marginTop: 16 }}
+                        className="mt-4 px-4 py-2 border rounded hover:bg-gray-100"
                         onClick={() => setView("setup")}
                     >
                         Back
@@ -378,38 +374,34 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                 </div>
             )}
             {view === "dashboard" && (
-                <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                    <h2>Your Lab Dashboard {loading && <Spinner />}</h2>
-                    <button
-                        onClick={() => setView("setup")}
-                        style={{ marginBottom: 12 }}
-                    >
-                        Add New Result
-                    </button>
-                    <button
-                        onClick={loadDashboard}
-                        disabled={loading}
-                        style={{ marginLeft: 8 }}
-                    >
-                        Refresh
-                    </button>
-                    <button
-                        onClick={clearAllData}
-                        disabled={loading || !dashboardData.length}
-                        style={{
-                            marginLeft: 8,
-                            color: "#b91c1c",
-                            borderColor: "#b91c1c",
-                        }}
-                        title="Delete all saved lab results"
-                    >
-                        Clear All Data
-                    </button>
-                    {error && (
-                        <div style={{ color: "red", marginTop: 8 }}>
-                            {error}
-                        </div>
-                    )}
+                <div className="max-w-[1200px] mx-auto">
+                    <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
+                        Your Lab Dashboard {loading && <Spinner />}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 mb-4 text-sm">
+                        <button
+                            className="px-3 py-2 border rounded hover:bg-gray-100"
+                            onClick={() => setView("setup")}
+                        >
+                            Add New Result
+                        </button>
+                        <button
+                            className="px-3 py-2 border rounded hover:bg-gray-100 disabled:opacity-50"
+                            onClick={loadDashboard}
+                            disabled={loading}
+                        >
+                            Refresh
+                        </button>
+                        <button
+                            className="px-3 py-2 border rounded disabled:opacity-50 text-red-700 border-red-700 hover:bg-red-50"
+                            onClick={clearAllData}
+                            disabled={loading || !dashboardData.length}
+                            title="Delete all saved lab results"
+                        >
+                            Clear All Data
+                        </button>
+                        {error && <div className="text-red-600">{error}</div>}
+                    </div>
                     <Dashboard data={dashboardData} />
                 </div>
             )}

@@ -13,28 +13,17 @@ function ErrorFallback({ error, resetErrorBoundary }: ErrorFallbackProps) {
     };
 
     return (
-        <div
-            style={{
-                padding: 40,
-                maxWidth: 600,
-                margin: "60px auto",
-                background: "#fff",
-                border: "1px solid #eee",
-                borderRadius: 8,
-            }}
-        >
-            <h2>Something went wrong.</h2>
-            <pre
-                style={{
-                    whiteSpace: "pre-wrap",
-                    background: "#f8f8f8",
-                    padding: 12,
-                    fontSize: 12,
-                }}
-            >
+        <div className="p-10 max-w-xl mx-auto mt-16 bg-white border border-gray-200 rounded-lg shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">
+                Something went wrong.
+            </h2>
+            <pre className="whitespace-pre-wrap bg-gray-100 p-3 text-xs rounded mb-4 overflow-auto max-h-60">
                 {error.message}
             </pre>
-            <button onClick={handleReload} style={{ padding: "10px 18px" }}>
+            <button
+                onClick={handleReload}
+                className="px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+            >
                 Reload
             </button>
         </div>

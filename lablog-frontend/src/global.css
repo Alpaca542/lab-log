@@ -1,9 +1,14 @@
-/* Global styles */
+@import "tailwindcss";
+
+/* Custom base overrides */
+* {
+    box-sizing: border-box;
+}
+
 body {
-    margin: 0;
-    font-family: system-ui, sans-serif;
-    background: #fafafa;
-    color: #111;
+    background: #f9fafb;
+    color: #111827;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
 }
 
 button {
@@ -25,19 +30,20 @@ button {
     display: inline-block;
     width: 16px;
     height: 16px;
-    border: 2px solid #999;
+    border: 2px solid #6b7280;
     border-top-color: transparent;
-    border-radius: 50%;
+    border-radius: 9999px;
     animation: spin .8s linear infinite;
 }
 
 /* Utility */
+/* Minimal utility classes preserved for existing usage */
 .flex {
     display: flex;
 }
 
 .gap-sm {
-    gap: 8px;
+    gap: 0.5rem;
 }
 
 .text-error {

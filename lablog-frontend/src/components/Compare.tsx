@@ -54,160 +54,151 @@ export default function Compare({
     };
 
     return (
-        <div style={{ display: "flex", gap: 24, alignItems: "flex-start" }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-                <h3>Original File</h3>
+        <div className="flex gap-6 items-start">
+            <div className="flex-1 min-w-0">
+                <h3 className="font-semibold mb-2">Original File</h3>
                 {originalFileUrl.toLowerCase().endsWith(".pdf") ? (
                     <embed
                         src={originalFileUrl}
                         type="application/pdf"
                         width="100%"
                         height={500}
+                        className="border rounded"
                     />
                 ) : (
                     <img
                         src={originalFileUrl}
-                        style={{ maxWidth: "100%", maxHeight: 500 }}
+                        className="max-w-full max-h-[500px] rounded border object-contain"
                     />
                 )}
             </div>
-            <div style={{ flex: 1 }}>
-                <h3>Extracted Values (Editable)</h3>
-                <div
-                    style={{
-                        maxHeight: 500,
-                        overflow: "auto",
-                        border: "1px solid #ddd",
-                        padding: 8,
-                    }}
-                >
-                    <table
-                        style={{
-                            width: "100%",
-                            borderCollapse: "collapse",
-                            fontSize: 14,
-                        }}
-                    >
+            <div className="flex-1">
+                <h3 className="font-semibold mb-2">
+                    Extracted Values (Editable)
+                </h3>
+                <div className="max-h-[500px] overflow-auto border border-gray-300 rounded p-2 bg-white">
+                    <table className="w-full border-collapse text-sm">
                         <thead>
-                            <tr>
-                                <th style={thStyle}>Test</th>
-                                <th style={thStyle}>Value</th>
-                                <th style={thStyle}>Unit</th>
-                                <th style={thStyle}>Ref Range</th>
-                                <th style={thStyle}>Category</th>
+                            <tr className="bg-gray-100 text-xs text-gray-700">
+                                <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
+                                    Test
+                                </th>
+                                <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
+                                    Value
+                                </th>
+                                <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
+                                    Unit
+                                </th>
+                                <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
+                                    Ref Range
+                                </th>
+                                <th className="text-left py-1 px-2 border-b border-gray-300 font-medium">
+                                    Category
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
-                            {rows.map((r, i) => (
-                                <tr key={i}>
-                                    <td style={tdStyle}>
-                                        <input
-                                            value={r.test_name}
-                                            onChange={(e) =>
-                                                updateRow(
-                                                    i,
-                                                    "test_name",
-                                                    e.target.value
-                                                )
-                                            }
-                                            style={inputStyle}
-                                        />
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <input
-                                            value={r.value}
-                                            onChange={(e) =>
-                                                updateRow(
-                                                    i,
-                                                    "value",
-                                                    e.target.value
-                                                )
-                                            }
-                                            style={{
-                                                ...inputStyle,
-                                                background:
-                                                    r.reference_range &&
-                                                    r.reference_range !==
-                                                        "NO_RANGE"
-                                                        ? inRange(
-                                                              r.value,
-                                                              r.reference_range
-                                                          )
-                                                            ? "#ecfdf5" // green tint
-                                                            : "#fef2f2" // red tint
-                                                        : undefined,
-                                                borderColor:
-                                                    r.reference_range &&
-                                                    r.reference_range !==
-                                                        "NO_RANGE"
-                                                        ? inRange(
-                                                              r.value,
-                                                              r.reference_range
-                                                          )
-                                                            ? "#10b981"
-                                                            : "#dc2626"
-                                                        : undefined,
-                                            }}
-                                        />
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <input
-                                            value={r.unit}
-                                            onChange={(e) =>
-                                                updateRow(
-                                                    i,
-                                                    "unit",
-                                                    e.target.value
-                                                )
-                                            }
-                                            style={inputStyle}
-                                        />
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <input
-                                            value={
-                                                r.reference_range === "NO_RANGE"
-                                                    ? ""
-                                                    : r.reference_range || ""
-                                            }
-                                            placeholder="No range"
-                                            onChange={(e) => {
-                                                const val =
-                                                    e.target.value.trim();
-                                                updateRow(
-                                                    i,
-                                                    "reference_range",
-                                                    val ? val : "NO_RANGE"
-                                                );
-                                            }}
-                                            style={inputStyle}
-                                        />
-                                    </td>
-                                    <td style={tdStyle}>
-                                        <input
-                                            value={r.category || ""}
-                                            onChange={(e) =>
-                                                updateRow(
-                                                    i,
-                                                    "category",
-                                                    e.target.value
-                                                )
-                                            }
-                                            style={inputStyle}
-                                            placeholder="blood / vision / ..."
-                                        />
-                                    </td>
-                                </tr>
-                            ))}
+                            {rows.map((r, i) => {
+                                const rangeActive =
+                                    r.reference_range &&
+                                    r.reference_range !== "NO_RANGE";
+                                const inside =
+                                    rangeActive &&
+                                    inRange(r.value, r.reference_range);
+                                return (
+                                    <tr
+                                        key={i}
+                                        className="odd:bg-white even:bg-gray-50"
+                                    >
+                                        <td className="py-1 px-2 border-b border-gray-200 align-top">
+                                            <input
+                                                value={r.test_name}
+                                                onChange={(e) =>
+                                                    updateRow(
+                                                        i,
+                                                        "test_name",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                            />
+                                        </td>
+                                        <td className="py-1 px-2 border-b border-gray-200 align-top">
+                                            <input
+                                                value={r.value}
+                                                onChange={(e) =>
+                                                    updateRow(
+                                                        i,
+                                                        "value",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className={`w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring ${
+                                                    rangeActive
+                                                        ? inside
+                                                            ? "bg-emerald-50 border-emerald-500"
+                                                            : "bg-rose-50 border-rose-500"
+                                                        : ""
+                                                }`}
+                                            />
+                                        </td>
+                                        <td className="py-1 px-2 border-b border-gray-200 align-top">
+                                            <input
+                                                value={r.unit}
+                                                onChange={(e) =>
+                                                    updateRow(
+                                                        i,
+                                                        "unit",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                            />
+                                        </td>
+                                        <td className="py-1 px-2 border-b border-gray-200 align-top">
+                                            <input
+                                                value={
+                                                    r.reference_range ===
+                                                    "NO_RANGE"
+                                                        ? ""
+                                                        : r.reference_range ||
+                                                          ""
+                                                }
+                                                placeholder="No range"
+                                                onChange={(e) => {
+                                                    const val =
+                                                        e.target.value.trim();
+                                                    updateRow(
+                                                        i,
+                                                        "reference_range",
+                                                        val ? val : "NO_RANGE"
+                                                    );
+                                                }}
+                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                            />
+                                        </td>
+                                        <td className="py-1 px-2 border-b border-gray-200 align-top">
+                                            <input
+                                                value={r.category || ""}
+                                                onChange={(e) =>
+                                                    updateRow(
+                                                        i,
+                                                        "category",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                className="w-full text-xs px-2 py-1 border rounded focus:outline-none focus:ring"
+                                                placeholder="blood / vision / ..."
+                                            />
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                             {rows.length === 0 && (
                                 <tr>
                                     <td
                                         colSpan={5}
-                                        style={{
-                                            textAlign: "center",
-                                            padding: 16,
-                                            color: "#777",
-                                        }}
+                                        className="text-center py-4 text-xs text-gray-500"
                                     >
                                         No rows
                                     </td>
@@ -219,28 +210,15 @@ export default function Compare({
                 <button
                     onClick={onConfirm}
                     disabled={disabled}
-                    style={{ marginTop: 12, padding: "10px 18px" }}
+                    className="mt-3 px-4 py-2 rounded bg-blue-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-blue-700"
                 >
                     Save To Database
                 </button>
-                <div style={{ marginTop: 8, fontSize: 11, color: "#555" }}>
-                    <span
-                        style={{
-                            background: "#ecfdf5",
-                            border: "1px solid #10b981",
-                            padding: "2px 6px",
-                            marginRight: 6,
-                        }}
-                    >
+                <div className="mt-2 text-[11px] text-gray-600 flex items-center gap-2">
+                    <span className="bg-emerald-50 border border-emerald-500 px-2 py-[2px] rounded text-emerald-700">
                         In range
                     </span>
-                    <span
-                        style={{
-                            background: "#fef2f2",
-                            border: "1px solid #dc2626",
-                            padding: "2px 6px",
-                        }}
-                    >
+                    <span className="bg-rose-50 border border-rose-500 px-2 py-[2px] rounded text-rose-700">
                         Out of range
                     </span>
                 </div>
@@ -248,19 +226,4 @@ export default function Compare({
         </div>
     );
 }
-
-const thStyle: React.CSSProperties = {
-    textAlign: "left",
-    borderBottom: "1px solid #ccc",
-    padding: 4,
-};
-const tdStyle: React.CSSProperties = {
-    borderBottom: "1px solid #eee",
-    padding: 4,
-    verticalAlign: "top",
-};
-const inputStyle: React.CSSProperties = {
-    width: "100%",
-    fontSize: 12,
-    padding: 4,
-};
+// Inline style objects removed after Tailwind migration.

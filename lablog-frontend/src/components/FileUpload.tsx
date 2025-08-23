@@ -35,15 +35,18 @@ export default function FileUpload({
     };
 
     return (
-        <div
-            style={{ border: "1px dashed #999", padding: 16, borderRadius: 8 }}
-        >
-            <input type="file" accept={accept} onChange={handleChange} />
+        <div className="border border-dashed border-gray-500 p-4 rounded-lg bg-white">
+            <input
+                type="file"
+                accept={accept}
+                onChange={handleChange}
+                className="text-sm file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700"
+            />
             {fileName && (
-                <div style={{ marginTop: 8, fontSize: 12 }}>{fileName}</div>
+                <div className="mt-2 text-xs text-gray-700">{fileName}</div>
             )}
             {previewUrl && (
-                <div style={{ marginTop: 16 }}>
+                <div className="mt-4">
                     {previewUrl.endsWith(".pdf") ||
                     fileName.toLowerCase().endsWith(".pdf") ? (
                         <embed
@@ -51,12 +54,13 @@ export default function FileUpload({
                             type="application/pdf"
                             width="100%"
                             height={400}
+                            className="border rounded"
                         />
                     ) : (
                         <img
                             src={previewUrl}
                             alt="preview"
-                            style={{ maxWidth: "100%", maxHeight: 400 }}
+                            className="max-w-full max-h-[400px] rounded border object-contain"
                         />
                     )}
                 </div>

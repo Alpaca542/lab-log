@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import getDataGradient from "../utils/GrowthPredictor";
 import type { LabValueRow } from "./Compare";
 import {
     LineChart,
@@ -31,7 +32,12 @@ export default function Dashboard({ data }: DashboardProps) {
         const map: Record<string, DashboardRow[]> = {};
         data.forEach((d) => {
             const cat = (d.category || "uncategorized").toLowerCase();
-            const numeric = parseNumeric(d.value || "");
+            let numeric = parseNumeric(d.value || "");
+            const unitLower = (d.unit || "").toLowerCase();
+            // Exclude from chart if unit qualitative/empty or value not numeric
+            if (!d.unit || unitLower === "qualitative" || numeric == null) {
+                numeric = null;
+            }
             if (!map[cat]) map[cat] = [];
             map[cat].push({ ...d, numeric } as DashboardRow);
         });
@@ -51,19 +57,17 @@ export default function Dashboard({ data }: DashboardProps) {
     }, [data]);
 
     const categoryKeys = Object.keys(categories);
+    const [expandedCats, setExpandedCats] = useState<Record<string, boolean>>(
+        {}
+    );
 
     if (!data.length)
-        return <div style={{ marginTop: 20 }}>No results yet.</div>;
+        return (
+            <div className="mt-5 text-sm text-gray-600">No results yet.</div>
+        );
 
     return (
-        <div
-            style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 40,
-                marginTop: 20,
-            }}
-        >
+        <div className="flex flex-col gap-10 mt-5">
             {categoryKeys.map((cat) => {
                 const rows = categories[cat];
                 // Determine which tests ever have a valid (non-missing) range
@@ -117,28 +121,20 @@ export default function Dashboard({ data }: DashboardProps) {
                 const otherRows = withEffectiveDate.filter(
                     (r) => r._date !== latestDate
                 );
-                // Local expand state per category
-                const [expanded, setExpanded] = useState(false);
+                // expanded state derived from expandedCats map
                 return (
                     <div
                         key={cat}
-                        style={{
-                            border: "1px solid #ddd",
-                            padding: 16,
-                            borderRadius: 8,
-                        }}
+                        className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm"
                     >
-                        <h3
-                            style={{
-                                marginTop: 0,
-                                textTransform: "capitalize",
-                            }}
-                        >
-                            {cat} ({rows.length})
+                        <h3 className="mt-0 mb-3 capitalize font-semibold text-gray-800 text-lg">
+                            {cat}{" "}
+                            <span className="text-gray-500 text-sm font-normal">
+                                ({rows.length})
+                            </span>
                         </h3>
-                        <div style={{ width: "100%", height: 300 }}>
+                        <div className="w-full h-[300px]">
                             {(() => {
-                                // Compute nice Y domain (padded) for visible test names with numeric values
                                 const nums: number[] = [];
                                 rows.forEach((r) => {
                                     if (
@@ -152,7 +148,6 @@ export default function Dashboard({ data }: DashboardProps) {
                                     let min = Math.min(...nums);
                                     let max = Math.max(...nums);
                                     if (min === max) {
-                                        // Single value; create artificial span
                                         const base =
                                             min === 0 ? 1 : Math.abs(min) * 0.1;
                                         min = min - base;
@@ -163,7 +158,6 @@ export default function Dashboard({ data }: DashboardProps) {
                                         min = min - pad;
                                         max = max + pad;
                                     }
-                                    if (min >= 0 && min < 0) min = 0; // safeguard (no-op logically)
                                     domain = [min, max];
                                 }
                                 return (
@@ -216,124 +210,188 @@ export default function Dashboard({ data }: DashboardProps) {
                                 );
                             })()}
                         </div>
-                        <div
-                            style={{
-                                fontSize: 11,
-                                marginTop: 4,
-                                color: "#555",
-                            }}
-                        >
-                            <span style={{ marginRight: 12 }}>
+                        <div className="text-[11px] mt-1 text-gray-600">
+                            <span className="mr-3">
                                 Dashed line = no reference range available
                             </span>
                         </div>
-                        <table
-                            style={{
-                                width: "100%",
-                                borderCollapse: "collapse",
-                                marginTop: 12,
-                                fontSize: 12,
-                            }}
-                        >
+                        <table className="w-full border-collapse mt-3 text-[12px]">
                             <thead>
                                 <tr>
-                                    <th style={th}>Date</th>
-                                    <th style={th}>Test</th>
-                                    <th style={th}>Value</th>
-                                    <th style={th}>Unit</th>
-                                    <th style={th}>Ref Range</th>
+                                    <th className="text-left py-1 px-1 border-b border-gray-300">
+                                        Date
+                                    </th>
+                                    <th className="text-left py-1 px-1 border-b border-gray-300">
+                                        Test
+                                    </th>
+                                    <th className="text-left py-1 px-1 border-b border-gray-300">
+                                        Value
+                                    </th>
+                                    <th
+                                        className="text-left py-1 px-1 border-b border-gray-300"
+                                        title="Trend last 2 measurements"
+                                    >
+                                        Δ(2)
+                                    </th>
+                                    <th
+                                        className="text-left py-1 px-1 border-b border-gray-300"
+                                        title="Trend across all measurements"
+                                    >
+                                        Trend
+                                    </th>
+                                    <th className="text-left py-1 px-1 border-b border-gray-300">
+                                        Unit
+                                    </th>
+                                    <th className="text-left py-1 px-1 border-b border-gray-300">
+                                        Ref Range
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {/* Latest date group (always visible) */}
-                                {latestRows.map((r, i) => (
-                                    <tr
-                                        key={"latest-" + i}
-                                        style={{ background: "#f1f5f9" }}
-                                    >
-                                        <td style={td}>{r._date}</td>
-                                        <td style={td}>{r.test_name}</td>
-                                        <td style={td}>
-                                            {formatValue(r.value)}
-                                        </td>
-                                        <td style={td}>{r.unit}</td>
-                                        <td style={td}>
-                                            {!r.reference_range ||
-                                            r.reference_range === "NO_RANGE" ? (
-                                                <span
-                                                    style={{
-                                                        opacity: 0.6,
-                                                        fontStyle: "italic",
-                                                    }}
-                                                >
-                                                    No range
-                                                </span>
-                                            ) : (
-                                                r.reference_range
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                                {/* Separator row */}
-                                {otherRows.length > 0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={5}
-                                            style={{
-                                                padding: 6,
-                                                background: "#eee",
-                                                fontSize: 11,
-                                            }}
+                                {latestRows.map((r, i) => {
+                                    const trend2 = computeTrendLast2(
+                                        rows,
+                                        r.test_name
+                                    );
+                                    const trendAll = computeTrendAll(
+                                        rows,
+                                        r.test_name
+                                    );
+                                    const rangeInfo = parseRange(
+                                        r.reference_range
+                                    );
+                                    const inR = inRange(
+                                        r.value,
+                                        r.reference_range
+                                    );
+                                    return (
+                                        <tr
+                                            key={"latest-" + i}
+                                            className="bg-slate-100"
                                         >
-                                            Historical Results (
-                                            {otherRows.length})
-                                            {!expanded && " – collapsed"}
-                                        </td>
-                                    </tr>
-                                )}
-                                {expanded &&
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {r._date}
+                                            </td>
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {r.test_name}
+                                            </td>
+                                            <td
+                                                className={`py-1 px-1 border-b border-gray-200 ${
+                                                    rangeInfo
+                                                        ? inR
+                                                            ? "bg-emerald-50 border-emerald-500"
+                                                            : "bg-rose-50 border-rose-500"
+                                                        : ""
+                                                }`}
+                                            >
+                                                {formatValue(r.value)}
+                                            </td>
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {trendCell(trend2)}
+                                            </td>
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {trendCell(trendAll)}
+                                            </td>
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {r.unit}
+                                            </td>
+                                            <td className="py-1 px-1 border-b border-gray-200">
+                                                {!r.reference_range ||
+                                                r.reference_range ===
+                                                    "NO_RANGE" ? (
+                                                    <span className="italic opacity-60">
+                                                        No range
+                                                    </span>
+                                                ) : (
+                                                    r.reference_range.replace(
+                                                        "<x<",
+                                                        "-"
+                                                    )
+                                                )}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                                {expandedCats[cat] &&
                                     otherRows
                                         .slice()
                                         .sort((a, b) =>
                                             b._date.localeCompare(a._date)
                                         )
-                                        .map((r, i) => (
-                                            <tr key={"hist-" + i}>
-                                                <td style={td}>{r._date}</td>
-                                                <td style={td}>
-                                                    {r.test_name}
-                                                </td>
-                                                <td style={td}>
-                                                    {formatValue(r.value)}
-                                                </td>
-                                                <td style={td}>{r.unit}</td>
-                                                <td style={td}>
-                                                    {!r.reference_range ||
-                                                    r.reference_range ===
-                                                        "NO_RANGE" ? (
-                                                        <span
-                                                            style={{
-                                                                opacity: 0.6,
-                                                                fontStyle:
-                                                                    "italic",
-                                                            }}
-                                                        >
-                                                            No range
-                                                        </span>
-                                                    ) : (
-                                                        r.reference_range
-                                                    )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        .map((r, i) => {
+                                            const trend2 = computeTrendLast2(
+                                                rows,
+                                                r.test_name
+                                            );
+                                            const trendAll = computeTrendAll(
+                                                rows,
+                                                r.test_name
+                                            );
+                                            const rangeInfo = parseRange(
+                                                r.reference_range
+                                            );
+                                            const inR = inRange(
+                                                r.value,
+                                                r.reference_range
+                                            );
+                                            return (
+                                                <tr
+                                                    key={"hist-" + i}
+                                                    className="hover:bg-slate-50"
+                                                >
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {r._date}
+                                                    </td>
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {r.test_name}
+                                                    </td>
+                                                    <td
+                                                        className={`py-1 px-1 border-b border-gray-100 ${
+                                                            rangeInfo
+                                                                ? inR
+                                                                    ? "bg-emerald-50 border-emerald-500"
+                                                                    : "bg-rose-50 border-rose-500"
+                                                                : ""
+                                                        }`}
+                                                    >
+                                                        {formatValue(r.value)}
+                                                    </td>
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {trendCell(trend2)}
+                                                    </td>
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {trendCell(trendAll)}
+                                                    </td>
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {r.unit}
+                                                    </td>
+                                                    <td className="py-1 px-1 border-b border-gray-100">
+                                                        {!r.reference_range ||
+                                                        r.reference_range ===
+                                                            "NO_RANGE" ? (
+                                                            <span className="italic opacity-60">
+                                                                No range
+                                                            </span>
+                                                        ) : (
+                                                            r.reference_range
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
                             </tbody>
                         </table>
                         {otherRows.length > 0 && (
                             <button
-                                style={{ marginTop: 8, fontSize: 11 }}
-                                onClick={() => setExpanded((e) => !e)}
+                                className="mt-2 text-[11px] text-blue-600 hover:underline"
+                                onClick={() =>
+                                    setExpandedCats((prev) => ({
+                                        ...prev,
+                                        [cat]: !prev[cat],
+                                    }))
+                                }
                             >
-                                {expanded
+                                {expandedCats[cat]
                                     ? "Hide historical"
                                     : `Show all (${otherRows.length})`}
                             </button>
@@ -366,9 +424,122 @@ function colorForIndex(i: number) {
     return palette[i % palette.length];
 }
 
-const th: React.CSSProperties = {
-    textAlign: "left",
-    padding: 4,
-    borderBottom: "1px solid #ccc",
-};
-const td: React.CSSProperties = { padding: 4, borderBottom: "1px solid #eee" };
+interface TrendInfo {
+    arrow: string;
+    color: string;
+    title: string;
+}
+function computeTrendAll(
+    allRows: any[],
+    testName: string
+): TrendInfo | undefined {
+    const points = allRows
+        .filter((r) => r.test_name === testName)
+        .map((l) => ({
+            v: parseFloat(l.value),
+            d: new Date(
+                l.test_date || l.dateAdded || l.created_at || 0
+            ).getTime(),
+        }))
+        .filter((p) => isFinite(p.v) && p.d > 0)
+        .sort((a, b) => a.d - b.d);
+    if (points.length < 2) return undefined;
+    const Y = points.map((p) => p.v);
+    const X = points.map((_, i) => i);
+    const { w } = getDataGradient(X, Y);
+    const change = w * (points.length - 1);
+    const minY = Math.min(...Y);
+    const maxY = Math.max(...Y);
+    const range = maxY - minY;
+    const thresh = Math.max(range * 0.1, Math.abs(maxY) * 0.001, 1e-6);
+    return arrowForChange(
+        change,
+        range,
+        thresh,
+        `Trend across all (${points.length}) values: change=${change.toFixed(
+            4
+        )}`
+    );
+}
+
+function computeTrendLast2(
+    allRows: any[],
+    testName: string
+): TrendInfo | undefined {
+    const pts = allRows
+        .filter((r) => r.test_name === testName)
+        .map((l) => ({
+            v: parseFloat(l.value),
+            d: new Date(
+                l.test_date || l.dateAdded || l.created_at || 0
+            ).getTime(),
+        }))
+        .filter((p) => isFinite(p.v) && p.d > 0)
+        .sort((a, b) => a.d - b.d);
+    if (pts.length < 2) return undefined;
+    const last2 = pts.slice(-2);
+    const change = last2[1].v - last2[0].v;
+    const minY = Math.min(last2[0].v, last2[1].v);
+    const maxY = Math.max(last2[0].v, last2[1].v);
+    const range = maxY - minY;
+    const thresh = Math.max(range * 0.1, Math.abs(maxY) * 0.001, 1e-6);
+    return arrowForChange(
+        change,
+        range,
+        thresh,
+        `Change last 2: Δ=${change.toFixed(4)}`
+    );
+}
+
+function arrowForChange(
+    change: number,
+    range: number,
+    thresh: number,
+    title: string
+): TrendInfo {
+    let arrow = "→";
+    let color = "#64748b";
+    if (!(range === 0 || Math.abs(change) < thresh)) {
+        if (change > 0) {
+            arrow = "↑";
+            color = "#16a34a";
+        } else {
+            arrow = "↓";
+            color = "#dc2626";
+        }
+    }
+    return { arrow, color, title };
+}
+
+// Range helpers (duplicated from Compare for coloring)
+function parseRange(range?: string) {
+    if (!range || range === "NO_RANGE") return null;
+    const m = range.match(
+        /\s*([+-]?\d*\.?\d+)\s*<\s*x\s*<\s*([+-]?\d*\.?\d+)/i
+    );
+    if (!m) return { low: -1, high: -1, alwaysGreen: true };
+    const low = parseFloat(m[1]);
+    const high = parseFloat(m[2]);
+    if (!isFinite(low) || !isFinite(high)) return null;
+    return { low, high, alwaysGreen: false };
+}
+function inRange(valStr: string, range?: string) {
+    const val = parseFloat(valStr);
+    if (!isFinite(val)) return false;
+    const r = parseRange(range);
+    if (!r || r.alwaysGreen) return true;
+    return val > r.low && val < r.high;
+}
+
+function trendCell(t?: TrendInfo) {
+    if (!t) return <span className="opacity-40">—</span>;
+    return (
+        <span
+            title={t.title}
+            style={{ color: t.color }}
+            className="font-semibold"
+        >
+            {t.arrow}
+        </span>
+    );
+}

@@ -59,64 +59,36 @@ export default function AuthFrame({
     };
 
     return (
-        <div
-            style={{
-                maxWidth: 380,
-                margin: "0 auto",
-                padding: 24,
-                border: "1px solid #ddd",
-                borderRadius: 8,
-            }}
-        >
-            <h2 style={{ marginTop: 0 }}>
+        <div className="max-w-sm mx-auto p-6 border border-gray-300 rounded-md bg-white shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">
                 {mode === "signin" ? "Sign In" : "Create Account"}
             </h2>
-            <form onSubmit={handleSubmit}>
-                <label style={{ display: "block", marginBottom: 8 }}>
-                    <span
-                        style={{
-                            display: "block",
-                            fontSize: 12,
-                            fontWeight: 600,
-                        }}
-                    >
-                        Email
-                    </span>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <label className="block text-xs font-semibold tracking-wide">
+                    <span className="block mb-1">Email</span>
                     <input
                         type="email"
                         required
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        style={{ width: "100%", padding: 8, marginTop: 4 }}
+                        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </label>
-                <label style={{ display: "block", marginBottom: 12 }}>
-                    <span
-                        style={{
-                            display: "block",
-                            fontSize: 12,
-                            fontWeight: 600,
-                        }}
-                    >
-                        Password
-                    </span>
+                <label className="block text-xs font-semibold tracking-wide">
+                    <span className="block mb-1">Password</span>
                     <input
                         type="password"
                         required
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        style={{ width: "100%", padding: 8, marginTop: 4 }}
+                        className="w-full border rounded px-3 py-2 text-sm focus:outline-none focus:ring focus:ring-blue-200"
                     />
                 </label>
-                {error && (
-                    <div style={{ color: "red", marginBottom: 12 }}>
-                        {error}
-                    </div>
-                )}
+                {error && <div className="text-red-600 text-xs">{error}</div>}
                 <button
                     type="submit"
                     disabled={loading}
-                    style={{ width: "100%", padding: 10 }}
+                    className="w-full py-2 rounded bg-blue-600 text-white text-sm font-medium disabled:opacity-50 hover:bg-blue-700 transition"
                 >
                     {loading
                         ? "Please wait..."
@@ -125,20 +97,14 @@ export default function AuthFrame({
                         : "Sign Up"}
                 </button>
             </form>
-            <div style={{ marginTop: 12, fontSize: 12, textAlign: "center" }}>
+            <div className="mt-4 text-[11px] text-center text-gray-600">
                 {mode === "signin" ? (
                     <>
                         Need an account?{" "}
                         <button
                             type="button"
                             onClick={() => setMode("signup")}
-                            style={{
-                                background: "none",
-                                border: "none",
-                                color: "#2563eb",
-                                cursor: "pointer",
-                                textDecoration: "underline",
-                            }}
+                            className="text-blue-600 underline hover:text-blue-700"
                         >
                             Sign Up
                         </button>
@@ -149,13 +115,7 @@ export default function AuthFrame({
                         <button
                             type="button"
                             onClick={() => setMode("signin")}
-                            style={{
-                                background: "none",
-                                border: "none",
-                                color: "#2563eb",
-                                cursor: "pointer",
-                                textDecoration: "underline",
-                            }}
+                            className="text-blue-600 underline hover:text-blue-700"
                         >
                             Sign In
                         </button>
@@ -166,12 +126,7 @@ export default function AuthFrame({
                 <button
                     type="button"
                     onClick={onCancel}
-                    style={{
-                        marginTop: 12,
-                        width: "100%",
-                        padding: 8,
-                        background: "#f3f4f6",
-                    }}
+                    className="mt-3 w-full py-2 rounded bg-gray-100 text-sm hover:bg-gray-200"
                 >
                     Cancel
                 </button>
