@@ -1,0 +1,45 @@
+/* Global styles */
+body {
+    margin: 0;
+    font-family: system-ui, sans-serif;
+    background: #fafafa;
+    color: #111;
+}
+
+button {
+    cursor: pointer;
+}
+
+/* Spinner */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #999;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+
+/* Utility */
+.flex {
+    display: flex;
+}
+
+.gap-sm {
+    gap: 8px;
+}
+
+.text-error {
+    color: #dc2626;
+}

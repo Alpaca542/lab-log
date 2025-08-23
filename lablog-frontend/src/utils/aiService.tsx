@@ -1,4 +1,4 @@
-import supabase, { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase";
+import supabase from "../supabase";
 
 export const askAI = async (message: string, model: string): Promise<any> => {
     try {
