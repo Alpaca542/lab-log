@@ -77,11 +77,13 @@ function App() {
     - Normalize all units.
     - Only use category values: blood, metabolic, vision, hormonal, kidney, liver, lipid, vitamin, immune, other.
     - Simplify all test names to their core standardized names; expand abbreviations and remove location/specimen.
+- If the tests are given together, it's highly probable they share the same category. 
 
 Edge cases:
 - If only one date is present but unlabeled, use it.
 - Never invent missing fields or values.
 - Always follow strict reference_range formatting.
+- If you cannot identify a unit(for example for qualitative measures), the test should be ignored entirely.
 
 Respond with a single JSON object matching ALL above rules. No explanation.
 
@@ -208,6 +210,27 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
             setDashboardData(flat);
         } catch (e: any) {
             setError(e.message || "Failed loading dashboard");
+        } finally {
+            setLoading(false);
+        }
+    }, [session]);
+
+    const clearAllData = useCallback(async () => {
+        if (!session) return;
+        const confirmMsg = `This will permanently delete ALL saved lab results for this account.\n\nType DELETE to confirm.`;
+        const input = window.prompt(confirmMsg, "");
+        if (input !== "DELETE") return;
+        setLoading(true);
+        setError(null);
+        try {
+            const { error: delError } = await supabase
+                .from("lab_results")
+                .delete()
+                .eq("user_id", session.user.id);
+            if (delError) throw delError;
+            setDashboardData([]);
+        } catch (e: any) {
+            setError(e.message || "Failed deleting data");
         } finally {
             setLoading(false);
         }
@@ -369,6 +392,18 @@ Your task: Parse input and output JSON matching all rules above. Do not add comm
                         style={{ marginLeft: 8 }}
                     >
                         Refresh
+                    </button>
+                    <button
+                        onClick={clearAllData}
+                        disabled={loading || !dashboardData.length}
+                        style={{
+                            marginLeft: 8,
+                            color: "#b91c1c",
+                            borderColor: "#b91c1c",
+                        }}
+                        title="Delete all saved lab results"
+                    >
+                        Clear All Data
                     </button>
                     {error && (
                         <div style={{ color: "red", marginTop: 8 }}>

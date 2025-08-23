@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { LabValueRow } from "./Compare";
 import {
     LineChart,
@@ -97,6 +97,28 @@ export default function Dashboard({ data }: DashboardProps) {
                 const testNames = Array.from(
                     new Set(rows.map((r) => r.test_name))
                 ).slice(0, 6);
+                // Derive effective date per row and partition latest vs others
+                const withEffectiveDate = rows.map((r) => ({
+                    ...r,
+                    _date: (
+                        r.test_date ||
+                        r.dateAdded ||
+                        r.created_at ||
+                        ""
+                    ).slice(0, 10),
+                }));
+                const latestDate = withEffectiveDate.reduce(
+                    (acc, r) => (r._date && r._date > acc ? r._date : acc),
+                    ""
+                );
+                const latestRows = withEffectiveDate.filter(
+                    (r) => r._date === latestDate
+                );
+                const otherRows = withEffectiveDate.filter(
+                    (r) => r._date !== latestDate
+                );
+                // Local expand state per category
+                const [expanded, setExpanded] = useState(false);
                 return (
                     <div
                         key={cat}
@@ -223,47 +245,112 @@ export default function Dashboard({ data }: DashboardProps) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {rows
-                                    .slice(-10)
-                                    .reverse()
-                                    .map((r, i) => (
-                                        <tr key={i}>
-                                            <td style={td}>
-                                                {(
-                                                    r.test_date ||
-                                                    r.dateAdded ||
-                                                    r.created_at ||
-                                                    ""
-                                                ).slice(0, 10)}
-                                            </td>
-                                            <td style={td}>{r.test_name}</td>
-                                            <td style={td}>{r.value}</td>
-                                            <td style={td}>{r.unit}</td>
-                                            <td style={td}>
-                                                {!r.reference_range ||
-                                                r.reference_range ===
-                                                    "NO_RANGE" ? (
-                                                    <span
-                                                        style={{
-                                                            opacity: 0.6,
-                                                            fontStyle: "italic",
-                                                        }}
-                                                    >
-                                                        No range
-                                                    </span>
-                                                ) : (
-                                                    r.reference_range
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                {/* Latest date group (always visible) */}
+                                {latestRows.map((r, i) => (
+                                    <tr
+                                        key={"latest-" + i}
+                                        style={{ background: "#f1f5f9" }}
+                                    >
+                                        <td style={td}>{r._date}</td>
+                                        <td style={td}>{r.test_name}</td>
+                                        <td style={td}>
+                                            {formatValue(r.value)}
+                                        </td>
+                                        <td style={td}>{r.unit}</td>
+                                        <td style={td}>
+                                            {!r.reference_range ||
+                                            r.reference_range === "NO_RANGE" ? (
+                                                <span
+                                                    style={{
+                                                        opacity: 0.6,
+                                                        fontStyle: "italic",
+                                                    }}
+                                                >
+                                                    No range
+                                                </span>
+                                            ) : (
+                                                r.reference_range
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {/* Separator row */}
+                                {otherRows.length > 0 && (
+                                    <tr>
+                                        <td
+                                            colSpan={5}
+                                            style={{
+                                                padding: 6,
+                                                background: "#eee",
+                                                fontSize: 11,
+                                            }}
+                                        >
+                                            Historical Results (
+                                            {otherRows.length})
+                                            {!expanded && " – collapsed"}
+                                        </td>
+                                    </tr>
+                                )}
+                                {expanded &&
+                                    otherRows
+                                        .slice()
+                                        .sort((a, b) =>
+                                            b._date.localeCompare(a._date)
+                                        )
+                                        .map((r, i) => (
+                                            <tr key={"hist-" + i}>
+                                                <td style={td}>{r._date}</td>
+                                                <td style={td}>
+                                                    {r.test_name}
+                                                </td>
+                                                <td style={td}>
+                                                    {formatValue(r.value)}
+                                                </td>
+                                                <td style={td}>{r.unit}</td>
+                                                <td style={td}>
+                                                    {!r.reference_range ||
+                                                    r.reference_range ===
+                                                        "NO_RANGE" ? (
+                                                        <span
+                                                            style={{
+                                                                opacity: 0.6,
+                                                                fontStyle:
+                                                                    "italic",
+                                                            }}
+                                                        >
+                                                            No range
+                                                        </span>
+                                                    ) : (
+                                                        r.reference_range
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
                             </tbody>
                         </table>
+                        {otherRows.length > 0 && (
+                            <button
+                                style={{ marginTop: 8, fontSize: 11 }}
+                                onClick={() => setExpanded((e) => !e)}
+                            >
+                                {expanded
+                                    ? "Hide historical"
+                                    : `Show all (${otherRows.length})`}
+                            </button>
+                        )}
                     </div>
                 );
             })}
         </div>
     );
+}
+
+function formatValue(raw: string): string {
+    const num = parseFloat(raw);
+    if (!isFinite(num)) return raw;
+    const fixed = num.toFixed(4); // 4 decimal places
+    // Trim trailing zeros and possible trailing dot
+    return fixed.replace(/\.0+$/, "").replace(/(\.\d*?[1-9])0+$/, "$1");
 }
 
 function colorForIndex(i: number) {
