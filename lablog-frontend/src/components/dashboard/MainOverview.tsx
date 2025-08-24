@@ -18,7 +18,7 @@ interface MainOverviewProps {
     addSchedule: (item: {
         test_name: string;
         category: string;
-        reason: "Out of normal range" | "Bad trend" | "Manual";
+        reason: "manual" | "trend" | "out_of_range";
         doctor?: string;
     }) => void;
     removeSchedule: (name: string) => void;
@@ -107,7 +107,7 @@ export default function MainOverview({
             addSchedule({
                 test_name: newName.trim(),
                 category: newCat,
-                reason: "Manual",
+                reason: "manual",
             });
             setNewName("");
         },

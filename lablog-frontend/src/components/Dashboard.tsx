@@ -5,6 +5,7 @@ import { rangeSeverity, isSteepTrend } from "./dashboard/utils";
 import Sidebar from "./dashboard/Sidebar.tsx";
 import MainOverview from "./dashboard/MainOverview.tsx";
 import CategoryPanel from "./dashboard/CategoryPanel.tsx";
+import SearchPanel from "./dashboard/SearchPanel.tsx";
 
 interface DashboardProps {
     data: DashboardRow[];
@@ -89,7 +90,17 @@ export default function Dashboard({ data, userId }: DashboardProps) {
         load();
     }, [userId]);
 
+    const normalizeReason = (r: any): ScheduleItem["reason"] => {
+        if (r === "out_of_range" || r === "trend" || r === "manual") return r;
+        const lower = String(r || "").toLowerCase();
+        if (lower.includes("out") && lower.includes("range"))
+            return "out_of_range";
+        if (lower.includes("trend")) return "trend";
+        return "manual";
+    };
+
     const addSchedule = async (item: Omit<ScheduleItem, "status">) => {
+        item = { ...item, reason: normalizeReason(item.reason) } as any;
         const exists = schedule.some(
             (p) => p.test_name.toLowerCase() === item.test_name.toLowerCase()
         );
@@ -118,8 +129,11 @@ export default function Dashboard({ data, userId }: DashboardProps) {
                         p === newItem ? { ...newItem, id: inserted[0].id } : p
                     )
                 );
-        } catch {
+        } catch (e: any) {
             setSchedule((prev) => prev.filter((p) => p !== newItem));
+            setScheduleError(
+                e?.message || "Failed creating schedule item (reason invalid?)"
+            );
         }
     };
     const markScheduleComplete = async (name: string) => {
@@ -194,21 +208,27 @@ export default function Dashboard({ data, userId }: DashboardProps) {
                     addSchedule({
                         test_name: r.test_name,
                         category: cat,
-                        reason: "Out of normal range",
+                        reason: "out_of_range",
                         doctor: (r as any).doctor || undefined,
                     });
                 if (isSteepTrend(rows, r.test_name))
                     addSchedule({
                         test_name: r.test_name,
                         category: cat,
-                        reason: "Bad trend",
+                        reason: "trend",
                         doctor: (r as any).doctor || undefined,
                     });
             });
         });
     }, [data, scheduleLoaded]);
 
-    if (activeTab !== "main" && !categories[activeTab]) setActiveTab("main");
+    if (
+        activeTab !== "main" &&
+        activeTab !== "search" &&
+        !categories[activeTab]
+    ) {
+        setActiveTab("main");
+    }
 
     // summary counts now computed inside Sidebar
 
@@ -234,6 +254,8 @@ export default function Dashboard({ data, userId }: DashboardProps) {
                         scheduleLoading={scheduleLoading}
                         scheduleError={scheduleError}
                     />
+                ) : activeTab === "search" ? (
+                    <SearchPanel allData={data} />
                 ) : (
                     <CategoryPanel
                         category={activeTab}

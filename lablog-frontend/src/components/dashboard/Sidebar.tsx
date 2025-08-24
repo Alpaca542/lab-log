@@ -2,6 +2,7 @@ import {
     PiHeartbeatLight,
     PiClipboardTextLight,
     PiFlaskLight,
+    PiMagnifyingGlassLight,
 } from "react-icons/pi";
 import type { ScheduleItem, DashboardRow } from "./types";
 import TabButton from "./TabButton.tsx";
@@ -70,6 +71,12 @@ export default function Sidebar({
                     icon={<PiClipboardTextLight className="w-4 h-4" />}
                     active={activeTab === "main"}
                     onClick={() => setActiveTab("main")}
+                />
+                <TabButton
+                    label="Search"
+                    icon={<PiMagnifyingGlassLight className="w-4 h-4" />}
+                    active={activeTab === "search"}
+                    onClick={() => setActiveTab("search")}
                 />
                 {categoryKeys.map((cat) => (
                     <TabButton

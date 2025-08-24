@@ -411,173 +411,188 @@ Input:` + raw;
                         onCancel={() => setView("landing")}
                     />
                 )}
-                {view === "setup" && (
-                    <div className="max-w-[1000px] mx-auto grid lg:grid-cols-2 gap-8 items-start">
-                        <div className="space-y-6">
-                            <h2 className="text-2xl font-semibold flex items-center gap-2 tracking-tight">
-                                <PiCloudArrowUpLight className="w-6 h-6 text-blue-600" />
-                                Upload Lab Report
-                            </h2>
-                            <FileUpload onFileSelected={handleFileSelected} />
-                            <div className="mt-2 flex gap-3 items-center text-sm">
-                                <button
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-600 text-blue-600 font-medium disabled:opacity-50 hover:bg-blue-600 hover:text-white transition"
-                                    onClick={runOcrAndAI}
-                                    disabled={!fileInfo || loading}
-                                >
-                                    <PiFlaskLight className="w-4 h-4" />
-                                    {loading ? "Processing..." : "Run OCR + AI"}
-                                </button>
-                                {statusMsg && (
-                                    <span className="text-xs text-slate-600">
-                                        {statusMsg}
-                                    </span>
+                <div className="py-6 px-6">
+                    {view === "setup" && (
+                        <div className="max-w-[1000px] mx-auto grid lg:grid-cols-2 gap-8 items-start">
+                            <div className="space-y-6">
+                                <h2 className="text-2xl font-semibold flex items-center gap-2 tracking-tight">
+                                    <PiCloudArrowUpLight className="w-6 h-6 text-blue-600" />
+                                    Upload Lab Report
+                                </h2>
+                                <FileUpload
+                                    onFileSelected={handleFileSelected}
+                                />
+                                <div className="mt-2 flex gap-3 items-center text-sm">
+                                    <button
+                                        className="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-blue-600 text-blue-600 font-medium disabled:opacity-50 hover:bg-blue-600 hover:text-white transition"
+                                        onClick={runOcrAndAI}
+                                        disabled={!fileInfo || loading}
+                                    >
+                                        <PiFlaskLight className="w-4 h-4" />
+                                        {loading
+                                            ? "Processing..."
+                                            : "Run OCR + AI"}
+                                    </button>
+                                    {statusMsg && (
+                                        <span className="text-xs text-slate-600">
+                                            {statusMsg}
+                                        </span>
+                                    )}
+                                </div>
+                                {error && (
+                                    <div className="text-red-600 mt-2 text-sm flex items-center gap-2">
+                                        {error}
+                                    </div>
+                                )}
+                                {rawOcrText && (
+                                    <details className="mt-4 text-sm">
+                                        <summary className="cursor-pointer font-medium flex items-center gap-2">
+                                            <PiStethoscopeLight className="w-4 h-4 text-slate-600" />{" "}
+                                            Raw OCR Text
+                                        </summary>
+                                        <pre className="whitespace-pre-wrap text-xs bg-slate-900/90 text-slate-100 p-3 rounded mt-2 max-h-72 overflow-auto ring-1 ring-slate-800">
+                                            {rawOcrText}
+                                        </pre>
+                                    </details>
                                 )}
                             </div>
+                            <div className="hidden lg:flex flex-col gap-4 pt-10 pr-4 text-sm text-slate-600">
+                                <div className="p-4 rounded-lg bg-white shadow border border-blue-100">
+                                    <h4 className="font-semibold text-blue-700 mb-2 text-sm uppercase tracking-wide">
+                                        Workflow
+                                    </h4>
+                                    <ol className="space-y-1 text-xs list-decimal list-inside">
+                                        <li>Select file (PDF / image)</li>
+                                        <li>OCR extracts raw text</li>
+                                        <li>AI structures tests & ranges</li>
+                                        <li>You review & edit values</li>
+                                        <li>Save into secure dashboard</li>
+                                    </ol>
+                                </div>
+                                <div className="p-4 rounded-lg bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100">
+                                    <p className="text-xs leading-relaxed">
+                                        Keep your longitudinal lab metrics
+                                        organized. Identify out-of-range or
+                                        steep trends and schedule follow-ups
+                                        automatically.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    {view === "review" && fileInfo && (
+                        <div className="max-w-[1300px] mx-auto">
+                            <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 tracking-tight">
+                                <PiStethoscopeLight className="w-6 h-6 text-blue-600" />{" "}
+                                Review Extracted Values
+                            </h2>
                             {error && (
-                                <div className="text-red-600 mt-2 text-sm flex items-center gap-2">
+                                <div className="text-red-600 mb-3 text-sm">
                                     {error}
                                 </div>
                             )}
-                            {rawOcrText && (
-                                <details className="mt-4 text-sm">
-                                    <summary className="cursor-pointer font-medium flex items-center gap-2">
-                                        <PiStethoscopeLight className="w-4 h-4 text-slate-600" />{" "}
-                                        Raw OCR Text
-                                    </summary>
-                                    <pre className="whitespace-pre-wrap text-xs bg-slate-900/90 text-slate-100 p-3 rounded mt-2 max-h-72 overflow-auto ring-1 ring-slate-800">
-                                        {rawOcrText}
-                                    </pre>
-                                </details>
-                            )}
-                        </div>
-                        <div className="hidden lg:flex flex-col gap-4 pt-10 pr-4 text-sm text-slate-600">
-                            <div className="p-4 rounded-lg bg-white shadow border border-blue-100">
-                                <h4 className="font-semibold text-blue-700 mb-2 text-sm uppercase tracking-wide">
-                                    Workflow
-                                </h4>
-                                <ol className="space-y-1 text-xs list-decimal list-inside">
-                                    <li>Select file (PDF / image)</li>
-                                    <li>OCR extracts raw text</li>
-                                    <li>AI structures tests & ranges</li>
-                                    <li>You review & edit values</li>
-                                    <li>Save into secure dashboard</li>
-                                </ol>
+                            <div className="flex gap-4 items-center mb-3 text-xs">
+                                <label className="flex items-center gap-1">
+                                    <span className="font-medium">
+                                        Test Date:
+                                    </span>
+                                    <input
+                                        type="date"
+                                        value={testDate}
+                                        max={new Date()
+                                            .toISOString()
+                                            .slice(0, 10)}
+                                        onChange={(e) =>
+                                            setTestDate(e.target.value)
+                                        }
+                                        className="border rounded px-2 py-1"
+                                    />
+                                </label>
+                                {!testDate && (
+                                    <span className="text-red-600">
+                                        No date detected - please set or use
+                                        today
+                                    </span>
+                                )}
+                                {!testDate && (
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setTestDate(
+                                                new Date()
+                                                    .toISOString()
+                                                    .slice(0, 10)
+                                            )
+                                        }
+                                        className="px-3 py-1 border rounded text-xs hover:bg-gray-100"
+                                    >
+                                        Use Today
+                                    </button>
+                                )}
                             </div>
-                            <div className="p-4 rounded-lg bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-100">
-                                <p className="text-xs leading-relaxed">
-                                    Keep your longitudinal lab metrics
-                                    organized. Identify out-of-range or steep
-                                    trends and schedule follow-ups
-                                    automatically.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                )}
-                {view === "review" && fileInfo && (
-                    <div className="max-w-[1300px] mx-auto">
-                        <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2 tracking-tight">
-                            <PiStethoscopeLight className="w-6 h-6 text-blue-600" />{" "}
-                            Review Extracted Values
-                        </h2>
-                        {error && (
-                            <div className="text-red-600 mb-3 text-sm">
-                                {error}
-                            </div>
-                        )}
-                        <div className="flex gap-4 items-center mb-3 text-xs">
-                            <label className="flex items-center gap-1">
-                                <span className="font-medium">Test Date:</span>
-                                <input
-                                    type="date"
-                                    value={testDate}
-                                    max={new Date().toISOString().slice(0, 10)}
-                                    onChange={(e) =>
-                                        setTestDate(e.target.value)
-                                    }
-                                    className="border rounded px-2 py-1"
-                                />
-                            </label>
-                            {!testDate && (
-                                <span className="text-red-600">
-                                    No date detected - please set or use today
-                                </span>
-                            )}
-                            {!testDate && (
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTestDate(
-                                            new Date()
-                                                .toISOString()
-                                                .slice(0, 10)
-                                        )
-                                    }
-                                    className="px-3 py-1 border rounded text-xs hover:bg-gray-100"
-                                >
-                                    Use Today
-                                </button>
-                            )}
-                        </div>
-                        <Compare
-                            originalFileUrl={fileInfo.objectUrl}
-                            rows={rows}
-                            onChange={setRows}
-                            onConfirm={saveToDb}
-                            disabled={loading || rows.length === 0 || !testDate}
-                        />
-                        <button
-                            className="mt-4 inline-flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-slate-100 text-sm"
-                            onClick={() => setView("setup")}
-                        >
-                            <PiArrowCounterClockwiseLight className="w-4 h-4" />{" "}
-                            Back
-                        </button>
-                    </div>
-                )}
-                {view === "dashboard" && (
-                    <div className="max-w-[1400px] mx-auto">
-                        <div className="flex flex-wrap items-center gap-3 mb-6">
-                            <h2 className="text-2xl font-semibold flex items-center gap-2 tracking-tight">
-                                <PiGaugeLight className="w-6 h-6 text-blue-600" />
-                                Dashboard {loading && <Spinner />}
-                            </h2>
-                            <div className="flex items-center gap-2 ml-auto">
-                                <button
-                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition"
-                                    onClick={() => setView("setup")}
-                                >
-                                    <PiPlusCircleLight className="w-4 h-4" />{" "}
-                                    Add Result
-                                </button>
-                                <button
-                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-slate-300 hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 transition"
-                                    onClick={loadDashboard}
-                                    disabled={loading}
-                                >
-                                    <PiArrowCounterClockwiseLight className="w-4 h-4" />{" "}
-                                    Refresh
-                                </button>
-                                <button
-                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-red-600 text-red-600 hover:bg-red-600 hover:text-white disabled:opacity-40 transition"
-                                    onClick={clearAllData}
-                                    disabled={loading || !dashboardData.length}
-                                    title="Delete all saved lab results"
-                                >
-                                    <PiTrashSimpleLight className="w-4 h-4" />{" "}
-                                    Clear All
-                                </button>
-                            </div>
-                        </div>
-                        <div className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm p-4 ring-1 ring-slate-100">
-                            <Dashboard
-                                data={dashboardData}
-                                userId={session?.user.id}
+                            <Compare
+                                originalFileUrl={fileInfo.objectUrl}
+                                rows={rows}
+                                onChange={setRows}
+                                onConfirm={saveToDb}
+                                disabled={
+                                    loading || rows.length === 0 || !testDate
+                                }
                             />
+                            <button
+                                className="mt-4 inline-flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-slate-100 text-sm"
+                                onClick={() => setView("setup")}
+                            >
+                                <PiArrowCounterClockwiseLight className="w-4 h-4" />{" "}
+                                Back
+                            </button>
                         </div>
-                    </div>
-                )}
+                    )}
+                    {view === "dashboard" && (
+                        <div className="max-w-[1400px] mx-auto">
+                            <div className="flex flex-wrap items-center gap-3 mb-6">
+                                <h2 className="text-2xl font-semibold flex items-center gap-2 tracking-tight">
+                                    <PiGaugeLight className="w-6 h-6 text-blue-600" />
+                                    Dashboard {loading && <Spinner />}
+                                </h2>
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <button
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition"
+                                        onClick={() => setView("setup")}
+                                    >
+                                        <PiPlusCircleLight className="w-4 h-4" />{" "}
+                                        Add Result
+                                    </button>
+                                    <button
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-slate-300 hover:border-blue-500 hover:bg-blue-50 disabled:opacity-50 transition"
+                                        onClick={loadDashboard}
+                                        disabled={loading}
+                                    >
+                                        <PiArrowCounterClockwiseLight className="w-4 h-4" />{" "}
+                                        Refresh
+                                    </button>
+                                    <button
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-sm font-medium border border-red-600 text-red-600 hover:bg-red-600 hover:text-white disabled:opacity-40 transition"
+                                        onClick={clearAllData}
+                                        disabled={
+                                            loading || !dashboardData.length
+                                        }
+                                        title="Delete all saved lab results"
+                                    >
+                                        <PiTrashSimpleLight className="w-4 h-4" />{" "}
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="rounded-xl border border-slate-200 bg-white/70 backdrop-blur-sm shadow-sm p-4 ring-1 ring-slate-100">
+                                <Dashboard
+                                    data={dashboardData}
+                                    userId={session?.user.id}
+                                />
+                            </div>
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );
