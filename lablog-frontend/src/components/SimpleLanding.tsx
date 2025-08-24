@@ -44,7 +44,7 @@ export default function SimpleLanding({ onSignIn }: SimpleLandingProps) {
                             LL
                         </div>
                         <span className="font-semibold text-slate-800 tracking-tight text-sm md:text-base">
-                            LabLog
+                            MedLab
                         </span>
                     </div>
                     <button
@@ -195,7 +195,7 @@ export default function SimpleLanding({ onSignIn }: SimpleLandingProps) {
             {/* Footer (muted) */}
             <footer className="relative z-10 py-6 text-center text-[11px] text-slate-400">
                 <span>
-                    © {new Date().getFullYear()} LabLog. All rights reserved.
+                    © {new Date().getFullYear()} MedLab. All rights reserved.
                 </span>
             </footer>
         </div>

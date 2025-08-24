@@ -120,6 +120,7 @@ Each test must be an object with these fields:
 
   * Standardized core name.
   * Expand abbreviations and remove location/specimen references.
+  * The test name should generally follow this structure: Urine Albumin, Serum Creatinine, Hemoglobin A1c, Vitamin D 25-Hydroxy, etc. If the name needs to specify from where the sample was taken (e.g., Serum, Plasma, Urine), include that at the start of the name. Also avoid location/specimen references like "in urine", "in serum", "in blood", etc.
 
 * **value**
 
@@ -367,7 +368,7 @@ Input:` + raw;
                     </div>
                     <div className="leading-tight">
                         <div className="font-semibold text-lg tracking-tight">
-                            LabLog
+                            MedLab
                         </div>
                         <div className="text-[11px] uppercase tracking-widest text-blue-600 font-medium">
                             Labs Tracker
@@ -405,13 +406,13 @@ Input:` + raw;
             </header>
             <main>
                 {view === "landing" && <SimpleLanding onSignIn={startAuth} />}
-                {view === "auth" && (
-                    <AuthFrame
-                        onAuthComplete={handleAuthComplete}
-                        onCancel={() => setView("landing")}
-                    />
-                )}
                 <div className="py-6 px-6">
+                    {view === "auth" && (
+                        <AuthFrame
+                            onAuthComplete={handleAuthComplete}
+                            onCancel={() => setView("landing")}
+                        />
+                    )}
                     {view === "setup" && (
                         <div className="max-w-[1000px] mx-auto grid lg:grid-cols-2 gap-8 items-start">
                             <div className="space-y-6">
