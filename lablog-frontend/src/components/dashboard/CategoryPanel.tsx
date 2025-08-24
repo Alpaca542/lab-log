@@ -253,12 +253,6 @@ export default function CategoryPanel({ category, rows }: CategoryPanelProps) {
                                                         <th className="text-left px-2 py-1 border-b">
                                                             Range
                                                         </th>
-                                                        <th
-                                                            className="text-left px-2 py-1 border-b"
-                                                            title="AI inferred range marker"
-                                                        >
-                                                            AI*
-                                                        </th>
                                                         <th className="text-left px-2 py-1 border-b">
                                                             Severity
                                                         </th>
@@ -269,11 +263,22 @@ export default function CategoryPanel({ category, rows }: CategoryPanelProps) {
                                                         .slice()
                                                         .reverse()
                                                         .map((r, i) => {
+                                                            const qualitative =
+                                                                (
+                                                                    r.unit || ""
+                                                                ).toLowerCase() ===
+                                                                    "text" ||
+                                                                (
+                                                                    r.unit || ""
+                                                                ).toLowerCase() ===
+                                                                    "qualitative";
                                                             const sevRow =
-                                                                rangeSeverity(
-                                                                    r.value,
-                                                                    r.reference_range
-                                                                );
+                                                                qualitative
+                                                                    ? "in"
+                                                                    : rangeSeverity(
+                                                                          r.value,
+                                                                          r.reference_range
+                                                                      );
                                                             return (
                                                                 <tr
                                                                     key={i}
@@ -304,35 +309,41 @@ export default function CategoryPanel({ category, rows }: CategoryPanelProps) {
                                                                                 range
                                                                             </span>
                                                                         ) : (
-                                                                            (
-                                                                                r.reference_range ||
-                                                                                ""
-                                                                            ).replace(
-                                                                                "<x<",
-                                                                                " - "
-                                                                            )
-                                                                        )}
-                                                                    </td>
-                                                                    <td className="px-2 py-1 border-b text-center text-[10px]">
-                                                                        {r.reference_range &&
-                                                                        r.reference_range !==
-                                                                            "NO_RANGE" &&
-                                                                        r.reference_range.endsWith(
-                                                                            "*"
-                                                                        ) ? (
-                                                                            <span title="AI-inferred reference range (verify)">
-                                                                                *
+                                                                            <span>
+                                                                                {(
+                                                                                    r.reference_range ||
+                                                                                    ""
+                                                                                )
+                                                                                    .replace(
+                                                                                        /<x</,
+                                                                                        " - "
+                                                                                    )
+                                                                                    .replace(
+                                                                                        /<=x<=/,
+                                                                                        " - "
+                                                                                    )}
+                                                                                {r.reference_range &&
+                                                                                    r.reference_range.endsWith(
+                                                                                        "*"
+                                                                                    ) && (
+                                                                                        <sup
+                                                                                            className="ml-0.5 text-[9px] text-blue-600 cursor-help"
+                                                                                            title="AI-inferred reference range (verify)"
+                                                                                        >
+                                                                                            *
+                                                                                        </sup>
+                                                                                    )}
                                                                             </span>
-                                                                        ) : (
-                                                                            ""
                                                                         )}
                                                                     </td>
                                                                     <td className="px-2 py-1 border-b">
-                                                                        <SeverityPill
-                                                                            severity={
-                                                                                sevRow as any
-                                                                            }
-                                                                        />
+                                                                        {!qualitative && (
+                                                                            <SeverityPill
+                                                                                severity={
+                                                                                    sevRow as any
+                                                                                }
+                                                                            />
+                                                                        )}
                                                                     </td>
                                                                 </tr>
                                                             );
@@ -397,18 +408,18 @@ export default function CategoryPanel({ category, rows }: CategoryPanelProps) {
                                                             </span>
                                                             <span className="font-medium">
                                                                 {r.value}
+                                                                {r.reference_range &&
+                                                                    r.reference_range.endsWith(
+                                                                        "*"
+                                                                    ) && (
+                                                                        <span
+                                                                            className="ml-1 text-[10px] text-blue-600"
+                                                                            title="AI-inferred reference range"
+                                                                        >
+                                                                            *
+                                                                        </span>
+                                                                    )}
                                                             </span>
-                                                            {r.reference_range &&
-                                                                r.reference_range.endsWith(
-                                                                    "*"
-                                                                ) && (
-                                                                    <span
-                                                                        className="text-[10px] text-blue-600"
-                                                                        title="AI-inferred reference range"
-                                                                    >
-                                                                        *
-                                                                    </span>
-                                                                )}
                                                         </li>
                                                     ))}
                                             </ul>

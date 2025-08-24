@@ -18,7 +18,7 @@ interface MainOverviewProps {
     addSchedule: (item: {
         test_name: string;
         category: string;
-        reason: "manual" | "trend" | "out_of_range";
+        reason: "Out of normal range" | "Bad trend" | "Manual";
         doctor?: string;
     }) => void;
     removeSchedule: (name: string) => void;
@@ -64,20 +64,31 @@ export default function MainOverview({
             }
         });
         return Object.values(latest)
-            .map((r) => ({
-                test_name: r.test_name,
-                category: (r.category || "uncategorized").toLowerCase(),
-                value: r.value,
-                unit: r.unit,
-                date: (r.test_date || r.dateAdded || r.created_at || "").slice(
-                    0,
-                    10
-                ),
-                reference_range: r.reference_range || "",
-                severity: rangeSeverity(r.value, r.reference_range) as any,
-            }))
-            .filter((r) => r.severity !== "in")
-            .sort((a, b) => a.test_name.localeCompare(b.test_name));
+            .map((r) => {
+                const qualitative =
+                    (r.unit || "").toLowerCase() === "text" ||
+                    (r.unit || "").toLowerCase() === "qualitative";
+                const sev = qualitative
+                    ? "in"
+                    : rangeSeverity(r.value, r.reference_range);
+                return {
+                    test_name: r.test_name,
+                    category: (r.category || "uncategorized").toLowerCase(),
+                    value: r.value,
+                    unit: r.unit,
+                    date: (
+                        r.test_date ||
+                        r.dateAdded ||
+                        r.created_at ||
+                        ""
+                    ).slice(0, 10),
+                    reference_range: r.reference_range || "",
+                    severity: sev as any,
+                    qualitative,
+                } as any;
+            })
+            .filter((r: any) => !r.qualitative && r.severity !== "in")
+            .sort((a: any, b: any) => a.test_name.localeCompare(b.test_name));
     }, [data]);
     const scheduleByCat = useMemo(() => {
         const m: Record<string, ScheduleItem[]> = {};
@@ -96,7 +107,7 @@ export default function MainOverview({
             addSchedule({
                 test_name: newName.trim(),
                 category: newCat,
-                reason: "manual",
+                reason: "Manual",
             });
             setNewName("");
         },
@@ -133,12 +144,6 @@ export default function MainOverview({
                                     </th>
                                     <th className="text-left px-2 py-1 border-b">
                                         Range
-                                    </th>
-                                    <th
-                                        className="text-left px-2 py-1 border-b"
-                                        title="AI inferred range marker"
-                                    >
-                                        AI*
                                     </th>
                                     <th className="text-left px-2 py-1 border-b">
                                         Date
@@ -178,33 +183,33 @@ export default function MainOverview({
                                                         No range
                                                     </span>
                                                 ) : (
-                                                    r.reference_range.replace(
-                                                        "<x<",
-                                                        "-"
-                                                    )
+                                                    r.reference_range
+                                                        .replace(/<x</, " - ")
+                                                        .replace(/<=x<=/, " - ")
                                                 )}
-                                            </td>
-                                            <td className="px-2 py-1 border-b text-center text-[10px]">
                                                 {r.reference_range &&
-                                                r.reference_range !==
-                                                    "NO_RANGE" &&
-                                                r.reference_range.endsWith(
-                                                    "*"
-                                                ) ? (
-                                                    <span title="AI-inferred reference range (verify)">
-                                                        *
-                                                    </span>
-                                                ) : (
-                                                    ""
-                                                )}
+                                                    r.reference_range.endsWith(
+                                                        "*"
+                                                    ) && (
+                                                        <sup
+                                                            className="ml-0.5 text-[9px] text-blue-600 cursor-help"
+                                                            title="AI-inferred reference range (verify with your provider)"
+                                                        >
+                                                            *
+                                                        </sup>
+                                                    )}
                                             </td>
                                             <td className="px-2 py-1 border-b">
                                                 {r.date}
                                             </td>
                                             <td className="px-2 py-1 border-b">
-                                                <SeverityPill
-                                                    severity={r.severity as any}
-                                                />
+                                                {r.severity && (
+                                                    <SeverityPill
+                                                        severity={
+                                                            r.severity as any
+                                                        }
+                                                    />
+                                                )}
                                             </td>
                                         </tr>
                                     );

@@ -194,14 +194,14 @@ export default function Dashboard({ data, userId }: DashboardProps) {
                     addSchedule({
                         test_name: r.test_name,
                         category: cat,
-                        reason: "out_of_range",
+                        reason: "Out of normal range",
                         doctor: (r as any).doctor || undefined,
                     });
                 if (isSteepTrend(rows, r.test_name))
                     addSchedule({
                         test_name: r.test_name,
                         category: cat,
-                        reason: "trend",
+                        reason: "Bad trend",
                         doctor: (r as any).doctor || undefined,
                     });
             });

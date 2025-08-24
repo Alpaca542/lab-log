@@ -3,9 +3,12 @@ import type { DashboardRow, TrendInfo } from "./types";
 
 export function parseRange(range?: string) {
   if (!range || range === "NO_RANGE") return null;
-  // Strip trailing * (AI-inferred range marker) if present
-  const cleaned = range.endsWith('*') ? range.slice(0, -1) : range;
-  const m = cleaned.match(/\s*([+-]?\d*\.?\d+)\s*<\s*x\s*<\s*([+-]?\d*\.?\d+)/i);
+  const cleanedStar = range.endsWith('*') ? range.slice(0, -1) : range;
+  const cleaned = cleanedStar.replace(/\s/g, '');
+  // Accept a<=x<=b or a<x<b or a-x-b variants, unify to low/high
+  let m = cleaned.match(/([+-]?\d*\.?\d+)<={0,1}x<=?([+-]?\d*\.?\d+)/i);
+  if (!m) m = cleaned.match(/([+-]?\d*\.?\d+)<x<([+-]?\d*\.?\d+)/i);
+  if (!m) m = cleaned.match(/([+-]?\d*\.?\d+)[-–]([+-]?\d*\.?\d+)/); // a-b style
   if (!m) return { low: -1, high: -1, alwaysGreen: true };
   const low = parseFloat(m[1]);
   const high = parseFloat(m[2]);
@@ -18,7 +21,7 @@ export function rangeSeverity(valStr: string, range?: string): "in" | "slight" |
   if (!r || r.alwaysGreen) return "in";
   const v = parseFloat(valStr);
   if (!isFinite(v)) return "in";
-  if (v > r.low && v < r.high) return "in";
+  if (v >= r.low && v <= r.high) return "in"; // inclusive bounds
   const span = r.high - r.low || 1;
   let distRatio = 0;
   if (v <= r.low) distRatio = (r.low - v) / span; else if (v >= r.high) distRatio = (v - r.high) / span;

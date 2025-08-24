@@ -98,7 +98,12 @@ export default function Compare({
                                 const rangeActive =
                                     r.reference_range &&
                                     r.reference_range !== "NO_RANGE";
+                                const isQual =
+                                    (r.unit || "").toLowerCase() === "text" ||
+                                    (r.unit || "").toLowerCase() ===
+                                        "qualitative";
                                 const inside =
+                                    !isQual &&
                                     rangeActive &&
                                     inRange(r.value, r.reference_range);
                                 return (
@@ -130,7 +135,7 @@ export default function Compare({
                                                     )
                                                 }
                                                 className={`w-full text-[11px] px-2 py-1 border rounded focus:outline-none focus:ring focus:ring-blue-200 ${
-                                                    rangeActive
+                                                    !isQual && rangeActive
                                                         ? inside
                                                             ? "bg-emerald-50 border-emerald-500"
                                                             : "bg-rose-50 border-rose-500"

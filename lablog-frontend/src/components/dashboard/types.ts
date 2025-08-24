@@ -10,7 +10,7 @@ export interface DashboardRow extends LabValueRow {
 export interface ScheduleItem {
   test_name: string;
   category: string;
-  reason: "out_of_range" | "trend" | "manual";
+  reason: "Out of normal range" | "Bad trend" | "Manual";
   status: "pending" | "done";
   id?: number;
   doctor?: string;

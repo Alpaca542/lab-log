@@ -78,8 +78,6 @@ function App() {
     const callAskAIForLabJSON = async (
         raw: string
     ): Promise<{ rows: LabValueRow[]; test_date?: string }> => {
-        const lines = raw.split(/\r?\n/).filter((l) => l.trim());
-        // Updated prompt: includes AI inferred reference range logic (*)
         const prompt =
             `**Task**
 Extract structured lab test results and the overall test date from the input text. Respond **only with JSON**, strictly following the schema and rules below.
@@ -89,13 +87,13 @@ Extract structured lab test results and the overall test date from the input tex
 ### **Output Format**
 
 {
-"test\_date": "YYYY-MM-DD" | "",
-"results": \[
+"test_date": "YYYY-MM-DD" | "",
+"results": [
 {
-"test\_name": "string",
+"test_name": "string",
 "value": number | "string",
 "unit": "string",
-"reference\_range": "a\<x\<b" | "NO\_RANGE" | "a\<x\<b\*",
+"reference_range": "a<x<b" | "a<x<b*",
 "category": "blood" | "metabolic" | "vision" | "hormonal" | "kidney" | "liver" | "lipid" | "vitamin" | "immune" | "other",
 "doctor": "Endocrinologist" | "Nephrologist" | "Hepatologist" | "Cardiologist" | "Hematologist" | "Ophthalmologist" | "Rheumatologist" | "Infectious Disease" | "Primary Care"
 }
@@ -106,7 +104,7 @@ Extract structured lab test results and the overall test date from the input tex
 
 ### **Extraction Rules**
 
-#### **Date (test\_date)**
+#### **Date (test_date)**
 
 * Extract the most relevant specimen collection date in any format.
 * Convert to YYYY-MM-DD if possible.
@@ -118,7 +116,7 @@ Extract structured lab test results and the overall test date from the input tex
 
 Each test must be an object with these fields:
 
-* **test\_name**
+* **test_name**
 
   * Standardized core name.
   * Expand abbreviations and remove location/specimen references.
@@ -134,19 +132,18 @@ Each test must be an object with these fields:
   * Use normalized canonical units.
   * If qualitative without a unit, set unit to "text".
 
-* **reference\_range**
+* **reference_range**
 
-  * Always use strict format: a\<x\<b (numeric values only, no units). "negative" or "not detected" should be treated as a missing range.
-  * **If only lower bound exists:** a\<x<999999.
-  * **If only upper bound exists:** 0\<x\<b.
-  * **If the range is missing or something like "negative" or "not-detected":**
-    * Infer a conventional adult range, appending a \* (e.g., 70\<x<99\*).
-    * Otherwise use "NO\_RANGE".
+  * Always use strict format: a<x<b (numeric values only, no units). "negative" or "not detected" should be treated as a missing range.
+  * **If only lower bound is not missing:** a<x<999999.
+  * **If only upper bound is not missing:** 0<x<b.
+  * **If the range is missing completely(no upper and no lower bounds) or equals to something like "negative" or "not-detected":**
+    * Then come up with a REGULAR adult range, appending a * in the end (e.g., a<x<b*).
 
 * **category**
 
   * One of: blood, metabolic, vision, hormonal, kidney, liver, lipid, vitamin, immune, other.
-  * If uncertain, default to other.
+  * If uncertain, default to "other".
 
 * **doctor**
 
@@ -178,18 +175,18 @@ White Blood Cells 8.1 x10^3/uL (Norm: 4.5–11.0)
 **Output:**
 
 {
-"test\_date": "2023-05-12",
-"results": \[
-{"test\_name": "Alanine Aminotransferase", "value": 32, "unit": "IU/L", "reference\_range": "7\<x<56", "category": "liver", "doctor": "Hepatologist"},
-{"test\_name": "Creatinine", "value": 1.02, "unit": "mg/dL", "reference\_range": "0.6\<x<1.3", "category": "kidney", "doctor": "Nephrologist"},
-{"test\_name": "Thyroid Stimulating Hormone", "value": 2.8, "unit": "mIU/L", "reference\_range": "0.5\<x<4.5", "category": "hormonal", "doctor": "Endocrinologist"},
-{"test\_name": "Vitamin B12", "value": 432, "unit": "pg/mL", "reference\_range": "NO\_RANGE", "category": "vitamin", "doctor": "Primary Care"},
-{"test\_name": "White Blood Cells", "value": 8.1, "unit": "x10^3/uL", "reference\_range": "4.5\<x<11.0", "category": "blood", "doctor": "Hematologist"}
+"test_date": "2023-05-12",
+"results": [
+{"test_name": "Alanine Aminotransferase", "value": 32, "unit": "IU/L", "reference_range": "7<x<56", "category": "liver", "doctor": "Hepatologist"},
+{"test_name": "Creatinine", "value": 1.02, "unit": "mg/dL", "reference_range": "0.6<x<1.3", "category": "kidney", "doctor": "Nephrologist"},
+{"test_name": "Thyroid Stimulating Hormone", "value": 2.8, "unit": "mIU/L", "reference_range": "0.5<x<4.5", "category": "hormonal", "doctor": "Endocrinologist"},
+{"test_name": "Vitamin B12", "value": 432, "unit": "pg/mL", "reference_range": "200<x<900*", "category": "vitamin", "doctor": "Primary Care"},
+{"test_name": "White Blood Cells", "value": 8.1, "unit": "x10^3/uL", "reference_range": "4.5<x<11.0", "category": "blood", "doctor": "Hematologist"}
 ]
 }
-` + lines.slice(0, 300).join("\n");
+Input:` + raw;
         const { data, error } = await supabase.functions.invoke("ask-ai", {
-            body: { message: prompt, model: "gpt-5-mini" },
+            body: { message: prompt, model: "gpt-5" },
         });
         if (error) throw error;
         const text: string = data?.response || "";
@@ -301,6 +298,7 @@ White Blood Cells 8.1 x10^3/uL (Norm: 4.5–11.0)
             if (insertError) throw insertError;
             setRows(datedRows);
             await loadDashboard();
+            // navigating to dashboard triggers schedule effect, but ensure fresh data state flush first
             setView("dashboard");
         } catch (e: any) {
             setError(e.message || "Save failed");
@@ -405,7 +403,7 @@ White Blood Cells 8.1 x10^3/uL (Norm: 4.5–11.0)
                     </nav>
                 )}
             </header>
-            <main className="px-6 py-6">
+            <main>
                 {view === "landing" && <SimpleLanding onSignIn={startAuth} />}
                 {view === "auth" && (
                     <AuthFrame
